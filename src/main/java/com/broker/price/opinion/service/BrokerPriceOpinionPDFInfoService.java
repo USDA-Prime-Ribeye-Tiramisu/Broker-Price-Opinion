@@ -523,6 +523,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 "plfhf.bathrooms_full::int, " +
                 "plfhf.bathrooms_half::int, " +
                 "plfhf.square_feet::int, " +
+                "plfhf.has_basement::bool, " +
                 "plfhf.garage_spaces::int " +
                 "from platlab_listings_full_history_filtered plfhf " +
                 "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 0.5)::geometry) " +
@@ -597,6 +598,7 @@ public class BrokerPriceOpinionPDFInfoService {
                     "plfhf.bathrooms_full::int, " +
                     "plfhf.bathrooms_half::int, " +
                     "plfhf.square_feet::int, " +
+                    "plfhf.has_basement::bool, " +
                     "plfhf.garage_spaces::int " +
                     "from platlab_listings_full_history_filtered plfhf " +
                     "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 1.5)::geometry) " +
@@ -672,6 +674,7 @@ public class BrokerPriceOpinionPDFInfoService {
                     "plfhf.bathrooms_full::int, " +
                     "plfhf.bathrooms_half::int, " +
                     "plfhf.square_feet::int, " +
+                    "plfhf.has_basement::bool, " +
                     "plfhf.garage_spaces::int " +
                     "from platlab_listings_full_history_filtered plfhf " +
                     "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 5)::geometry) " +
@@ -747,6 +750,7 @@ public class BrokerPriceOpinionPDFInfoService {
                     "plfhf.bathrooms_full::int, " +
                     "plfhf.bathrooms_half::int, " +
                     "plfhf.square_feet::int, " +
+                    "plfhf.has_basement::bool, " +
                     "plfhf.garage_spaces::int " +
                     "from platlab_listings_full_history_filtered plfhf " +
                     "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 20)::geometry) " +
@@ -1025,6 +1029,33 @@ public class BrokerPriceOpinionPDFInfoService {
                 comp.setBathrooms(null);
             }
 
+            Integer basementAreaCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.BasementArea;
+            Boolean hasBasementCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                    ? (Boolean) compClosed.get("has_basement")
+                    : null;
+
+            if (hasBasementCPClosedPlatlabSource != null) {
+                comp.setBasement(hasBasementCPClosedPlatlabSource ? "Yes" : "No");
+            } else if (basementAreaCPClosedDTAPISource != null) {
+                comp.setBasement(basementAreaCPClosedDTAPISource > 0 ? "Yes" : "No");
+            } else {
+                comp.setBasement("Unk.");
+            }
+
+            String heatTypeCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
+            if (heatTypeCPClosedDTAPISource != null && !heatTypeCPClosedDTAPISource.isEmpty()) {
+                comp.setHeating(heatTypeCPClosedDTAPISource);
+            } else {
+                comp.setHeating("Unk.");
+            }
+
+            String airConditioningCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.AirConditioning;
+            if (airConditioningCPClosedDTAPISource != null && !airConditioningCPClosedDTAPISource.isEmpty()) {
+                comp.setCooling(airConditioningCPClosedDTAPISource);
+            } else {
+                comp.setCooling("Unk.");
+            }
+
             Integer garageSpacesCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.GarageCapacity;
             Integer garageSpacesCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
                     ? (Integer) compClosed.get("garage_spaces")
@@ -1109,6 +1140,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 "plfhf.bathrooms_full::int, " +
                 "plfhf.bathrooms_half::int, " +
                 "plfhf.square_feet::int, " +
+                "plfhf.has_basement::bool, " +
                 "plfhf.garage_spaces::int " +
                 "from platlab_listings_full_history_filtered plfhf " +
                 "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 0.5)::geometry) " +
@@ -1183,6 +1215,7 @@ public class BrokerPriceOpinionPDFInfoService {
                     "plfhf.bathrooms_full::int, " +
                     "plfhf.bathrooms_half::int, " +
                     "plfhf.square_feet::int, " +
+                    "plfhf.has_basement::bool, " +
                     "plfhf.garage_spaces::int " +
                     "from platlab_listings_full_history_filtered plfhf " +
                     "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 1.5)::geometry) " +
@@ -1258,6 +1291,7 @@ public class BrokerPriceOpinionPDFInfoService {
                     "plfhf.bathrooms_full::int, " +
                     "plfhf.bathrooms_half::int, " +
                     "plfhf.square_feet::int, " +
+                    "plfhf.has_basement::bool, " +
                     "plfhf.garage_spaces::int " +
                     "from platlab_listings_full_history_filtered plfhf " +
                     "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 5)::geometry) " +
@@ -1333,6 +1367,7 @@ public class BrokerPriceOpinionPDFInfoService {
                     "plfhf.bathrooms_full::int, " +
                     "plfhf.bathrooms_half::int, " +
                     "plfhf.square_feet::int, " +
+                    "plfhf.has_basement::bool, " +
                     "plfhf.garage_spaces::int " +
                     "from platlab_listings_full_history_filtered plfhf " +
                     "where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(" + brokerPriceOpinionPDFInfoDTO.getLongitude() + ", " + brokerPriceOpinionPDFInfoDTO.getLatitude() + ")::geography, 1609.34 * 20)::geometry) " +
@@ -1609,6 +1644,33 @@ public class BrokerPriceOpinionPDFInfoService {
                 comp.setBathrooms(bathroomsCPActivePlatlabSource);
             } else {
                 comp.setBathrooms(null);
+            }
+
+            Integer basementAreaCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.BasementArea;
+            Boolean hasBasementCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                    ? (Boolean) compActive.get("has_basement")
+                    : null;
+
+            if (hasBasementCPActivePlatlabSource != null) {
+                comp.setBasement(hasBasementCPActivePlatlabSource ? "Yes" : "No");
+            } else if (basementAreaCPActiveDTAPISource != null) {
+                comp.setBasement(basementAreaCPActiveDTAPISource > 0 ? "Yes" : "No");
+            } else {
+                comp.setBasement("Unk.");
+            }
+
+            String heatTypeCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
+            if (heatTypeCPActiveDTAPISource != null && !heatTypeCPActiveDTAPISource.isEmpty()) {
+                comp.setHeating(heatTypeCPActiveDTAPISource);
+            } else {
+                comp.setHeating("Unk.");
+            }
+
+            String airConditioningCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.AirConditioning;
+            if (airConditioningCPActiveDTAPISource != null && !airConditioningCPActiveDTAPISource.isEmpty()) {
+                comp.setCooling(airConditioningCPActiveDTAPISource);
+            } else {
+                comp.setCooling("Unk.");
             }
 
             Integer garageSpacesCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.GarageCapacity;

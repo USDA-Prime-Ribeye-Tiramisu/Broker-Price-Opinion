@@ -960,7 +960,11 @@ public class FillBrokerPriceOpinionPDFService {
 
                     // Basement & Finish
                     contentStream.newLineAtOffset(168 + 67 * i, 254);
-                    contentStream.showText("");
+                    if (comp.getBasement() == null) {
+                        contentStream.showText("");
+                    } else {
+                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
+                    }
 
                     contentStream.endText();
 
@@ -970,7 +974,19 @@ public class FillBrokerPriceOpinionPDFService {
 
                     // Heating & Cooling
                     contentStream.newLineAtOffset(168 + 67 * i, 245);
-                    contentStream.showText("");
+                    if (comp.getHeating() == null) {
+                        contentStream.showText("");
+                    } else {
+                        contentStream.showText(comp.getHeating());
+                    }
+
+                    contentStream.showText(" / ");
+
+                    if (comp.getCooling() == null) {
+                        contentStream.showText("");
+                    } else {
+                        contentStream.showText(comp.getCooling());
+                    }
 
                     contentStream.endText();
 
@@ -1324,7 +1340,11 @@ public class FillBrokerPriceOpinionPDFService {
 
                     // Basement & Finish
                     contentStream.newLineAtOffset(370 + 67 * i, 254);
-                    contentStream.showText("");
+                    if (comp.getBasement() == null) {
+                        contentStream.showText("");
+                    } else {
+                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
+                    }
 
                     contentStream.endText();
 
@@ -1334,7 +1354,19 @@ public class FillBrokerPriceOpinionPDFService {
 
                     // Heating & Cooling
                     contentStream.newLineAtOffset(370 + 67 * i, 245);
-                    contentStream.showText("");
+                    if (comp.getHeating() == null) {
+                        contentStream.showText("");
+                    } else {
+                        contentStream.showText(comp.getHeating());
+                    }
+
+                    contentStream.showText(" / ");
+
+                    if (comp.getCooling() == null) {
+                        contentStream.showText("");
+                    } else {
+                        contentStream.showText(comp.getCooling());
+                    }
 
                     contentStream.endText();
 
