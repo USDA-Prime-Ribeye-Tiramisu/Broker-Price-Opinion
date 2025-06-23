@@ -2,6 +2,7 @@ package com.broker.price.opinion.service;
 
 import com.broker.price.opinion.dto.BrokerPriceOpinionPDFInfoDTO;
 import com.broker.price.opinion.dto.ComparablePropertyInformation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -13,6 +14,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
+@Slf4j
 @Service
 public class FillBrokerPriceOpinionPDFService {
 
