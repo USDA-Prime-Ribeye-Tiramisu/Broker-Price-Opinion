@@ -781,12 +781,6 @@ public class BrokerPriceOpinionPDFInfoService {
             });
         }
 
-
-
-
-
-
-
         List<ComparablePropertyInformation> closedComparablePropertyInformationList = new ArrayList<>();
 
         for (Map<String, Object> compClosed : resultCompsClosed) {

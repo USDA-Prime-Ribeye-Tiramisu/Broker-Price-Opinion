@@ -19,14 +19,12 @@ public class FillBrokerPriceOpinionPDFService {
     @Autowired
     private BrokerPriceOpinionPDFInfoService service;
 
-    public void fillPlaltabPDF() throws IOException {
-
-        String address = "full address";
+    public void fillPlaltabPDF(String fullAddress) throws IOException {
 
         String inputPath = "PDF input";
         String outputPath = "PDF output";
 
-        BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = service.getBrokerPriceOpinionPDFInformation(address);
+        BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = service.getBrokerPriceOpinionPDFInformation(fullAddress);
 
         try (PDDocument document = PDDocument.load(new File(inputPath))) {
 
