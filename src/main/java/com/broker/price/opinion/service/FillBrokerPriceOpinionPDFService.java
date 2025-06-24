@@ -18,6 +18,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -32,6 +33,9 @@ import java.util.Date;
 @Slf4j
 @Service
 public class FillBrokerPriceOpinionPDFService {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     static AmazonS3 amazonS3;
     static TransferManager tx;
@@ -48,7 +52,7 @@ public class FillBrokerPriceOpinionPDFService {
     @Autowired
     private BrokerPriceOpinionPDFInfoService service;
 
-    public void fillPlaltabPDF(String reportName, String metro, String mlsID) throws IOException {
+    public void fillPlaltabPDF(Integer id, String reportName, String metro, String mlsID) throws IOException {
 
         String inputPath = "PDF input";
 
@@ -1453,6 +1457,18 @@ public class FillBrokerPriceOpinionPDFService {
             if (convertedURL != null) {
                 convertedURL = StringUtils.substringBeforeLast(convertedURL, "?X-Amz-");
             }
+
+            updateBrokerPriceOpinionPDFGenerationResult(id, outputTimestamp, convertedURL, "DONE");
         }
+    }
+
+    public void updateBrokerPriceOpinionPDFGenerationResult(Integer id, String outputTimestamp,
+                                                            String outputFileURL, String status) {
+
+        String UPDATE_SQL = "UPDATE broker_price_opinion_files " +
+                "SET output_timestamp = ?, output_file_url = ?, status = ? " +
+                "WHERE id = ?";
+
+        jdbcTemplate.update(UPDATE_SQL, outputTimestamp, outputFileURL, status, id);
     }
 }
