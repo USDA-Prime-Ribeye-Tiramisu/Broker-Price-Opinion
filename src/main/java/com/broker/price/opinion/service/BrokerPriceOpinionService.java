@@ -9,12 +9,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -26,11 +29,14 @@ public class BrokerPriceOpinionService {
     @Autowired
     private BrokerPriceOpinionRepository brokerPriceOpinionRepository;
 
+    @Autowired
+    private FillBrokerPriceOpinionPDFService fillBrokerPriceOpinionPDFService;
+
     public Optional<BrokerPriceOpinionFile> findBrokerPriceOpinion(Long id) {
         return brokerPriceOpinionRepository.findById(id);
     }
 
-    public BrokerPriceOpinionFile generateBrokerPriceOpinionPDF(String reportName, String metro, String mlsID) {
+    public BrokerPriceOpinionFile generateBrokerPriceOpinionPDFRequest(String reportName, String metro, String mlsID) {
 
         BrokerPriceOpinionFile file = new BrokerPriceOpinionFile();
 
@@ -46,6 +52,14 @@ public class BrokerPriceOpinionService {
         file.setMls_id(mlsID);
 
         brokerPriceOpinionRepository.save(file);
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                this.fillBrokerPriceOpinionPDFService.fillPlaltabPDF(reportName, metro, mlsID);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         return file;
     }

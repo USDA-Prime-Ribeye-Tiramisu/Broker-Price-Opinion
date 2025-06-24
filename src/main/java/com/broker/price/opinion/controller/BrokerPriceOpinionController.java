@@ -29,7 +29,7 @@ public class BrokerPriceOpinionController {
             @RequestParam("metro") String metro,
             @RequestParam("mls_id") String mls_id) {
 
-        BrokerPriceOpinionFile file = service.generateBrokerPriceOpinionPDF(report_name, metro, mls_id);
+        BrokerPriceOpinionFile file = service.generateBrokerPriceOpinionPDFRequest(report_name, metro, mls_id);
 
         if (file == null) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
