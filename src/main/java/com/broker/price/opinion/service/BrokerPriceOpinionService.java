@@ -55,7 +55,7 @@ public class BrokerPriceOpinionService {
 
         CompletableFuture.runAsync(() -> {
             try {
-                this.fillBrokerPriceOpinionPDFService.fillPlaltabPDF(reportName, metro, mlsID);
+                this.fillBrokerPriceOpinionPDFService.fillPlaltabPDF(id, reportName, metro, mlsID);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
