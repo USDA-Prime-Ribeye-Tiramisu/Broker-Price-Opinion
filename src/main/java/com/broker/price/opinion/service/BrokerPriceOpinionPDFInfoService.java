@@ -41,13 +41,9 @@ public class BrokerPriceOpinionPDFInfoService {
         this.prodBackupJdbcTemplate = prodBackupJdbcTemplate;
     }
 
-    public BrokerPriceOpinionPDFInfoDTO getBrokerPriceOpinionPDFInformation(String fullAddress) {
+    public BrokerPriceOpinionPDFInfoDTO getBrokerPriceOpinionPDFInformation(String metro, String mlsId) {
 
         BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = new BrokerPriceOpinionPDFInfoDTO();
-
-        brokerPriceOpinionPDFInfoDTO.setFullAddress(fullAddress);
-
-        PropertyDetailReportResponse propertyDetailReportResponse = getPropertyDetailReportDTAPI(fullAddress);
 
         String queryTPInfoPlatlab = "select " +
                 "plfhf.address, " +
@@ -84,7 +80,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 "   else null " +
                 "end as lot_size " +
                 "from platlab_listings_full_history_filtered plfhf " +
-                "where plfhf.display_mls_number = 'display_mls_number'";
+                "where plfhf.display_mls_number = '" + mlsId + "' and plfhf.mls_id = '" + metro + "'";
 
         List<Map<String, Object>> queryResult = prodBackupJdbcTemplate.query(queryTPInfoPlatlab, rs -> {
             List<Map<String, Object>> rows = new ArrayList<>();
@@ -103,6 +99,14 @@ public class BrokerPriceOpinionPDFInfoService {
 
             return rows;
         });
+
+        assert queryResult != null;
+        brokerPriceOpinionPDFInfoDTO.setFullAddress(
+                queryResult.get(0).get("address") + ", " + queryResult.get(0).get("city") + ", " +
+                        queryResult.get(0).get("state") + " " + queryResult.get(0).get("zip") + ", United States");
+
+        PropertyDetailReportResponse propertyDetailReportResponse = getPropertyDetailReportDTAPI(
+                brokerPriceOpinionPDFInfoDTO.getFullAddress());
 
         PropertyDetailReportData propertyDetailReportData = propertyDetailReportResponse.Reports.get(0).Data;
 

@@ -1,7 +1,18 @@
 package com.broker.price.opinion.service;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.transfer.TransferManager;
 import com.broker.price.opinion.dto.BrokerPriceOpinionPDFInfoDTO;
-import com.broker.price.opinion.dto.ComparablePropertyInformation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -10,21 +21,38 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
+@Slf4j
 @Service
 public class FillBrokerPriceOpinionPDFService {
+
+    static AmazonS3 amazonS3;
+    static TransferManager tx;
+    private static String AWS_ACCESS_KEY = "AKIARQHW4MNAK4AS6JHX";
+    private static String AWS_SECRET_KEY = "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";
+    static final String bucketName = "broker-price-opinion-files";
+
+    static {
+        BasicAWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY, AWS_SECRET_KEY);
+        amazonS3 = AmazonS3Client.builder().withRegion(Regions.US_EAST_1)
+                .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+    }
 
     @Autowired
     private BrokerPriceOpinionPDFInfoService service;
 
-    public void fillPlaltabPDF(String fullAddress) throws IOException {
+    public void fillPlaltabPDF(String reportName, String metro, String mlsID) throws IOException {
 
         String inputPath = "PDF input";
-        String outputPath = "PDF output";
 
-        BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = service.getBrokerPriceOpinionPDFInformation(fullAddress);
+        BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = service.getBrokerPriceOpinionPDFInformation(metro, mlsID);
 
         try (PDDocument document = PDDocument.load(new File(inputPath))) {
 
@@ -653,757 +681,778 @@ public class FillBrokerPriceOpinionPDFService {
 
                 contentStream.endText();
 
-                for (int i = 0; i < 3; i++) {
-
-                    ComparablePropertyInformation comp = brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(i);
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 483);
-                    if (comp.getAddress() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getAddress());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 474);
-                    if (comp.getCity() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getCity());
-                    }
-
-                    contentStream.showText(", ");
-
-                    if (comp.getState() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getState());
-                    }
-
-                    contentStream.showText(", ");
-
-                    if (comp.getZipcode() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getZipcode());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 457);
-                    if (comp.getProximity() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getProximity() + " miles");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 448);
-                    contentStream.showText("N/A");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 439);
-                    if (comp.getPricePerSqFt() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("$" + comp.getPricePerSqFt());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 430);
-                    if (comp.getOriginalListingPrice() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("$" + comp.getOriginalListingPrice() + ".00");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 421);
-                    if (comp.getCurrentListingPrice() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("$" + comp.getCurrentListingPrice() + ".00");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 412);
-                    if (comp.getListDate() == null || comp.getListDate().isEmpty()) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("N/A" + " / " + comp.getListDate());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 403);
-                    if (comp.getDaysOnMarket() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getDaysOnMarket()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 394);
-                    if (comp.getMlsID() == null || comp.getMlsID().isEmpty()) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getMlsID());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 371);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 362);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 353);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 344);
-                    contentStream.showText(comp.getLocation());
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 335);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 326);
-                    if (comp.getSiteORLotSize() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getSiteORLotSize()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 317);
-                    if (comp.getYearBuilt() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getYearBuilt()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 308);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 299);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 290);
-                    if (comp.getStyle() == null || comp.getStyle().isEmpty()) {
-                        contentStream.showText("");
-                    } else {
-                        // TODO: CHANGE
-                        contentStream.showText("Detached");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 272);
-                    if (comp.getTotalRooms() == null || comp.getTotalRooms() == 0) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getTotalRooms()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 22 + 67 * i, 272);
-                    if (comp.getBedrooms() == null || comp.getBedrooms() == 0) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getBedrooms()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 22 + 23 + 67 * i, 272);
-                    if (comp.getBathrooms() == null || comp.getBathrooms() == 0.0) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getBathrooms()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 263);
-                    if (comp.getGrossLivingArea() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getGrossLivingArea()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    // Basement & Finish
-                    contentStream.newLineAtOffset(168 + 67 * i, 254);
-                    if (comp.getBasement() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    // Heating & Cooling
-                    contentStream.newLineAtOffset(168 + 67 * i, 245);
-                    if (comp.getHeating() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getHeating());
-                    }
-
-                    contentStream.showText(" / ");
-
-                    if (comp.getCooling() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getCooling());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 236);
-                    if (comp.getGarage() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getGarage());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 227);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(168 + 67 * i, 218);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-                }
-
-                for (int i = 0; i < 3; i++) {
-
-                    ComparablePropertyInformation comp = brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(i);
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 483);
-                    if (comp.getAddress() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getAddress());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 474);
-                    if (comp.getCity() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getCity());
-                    }
-
-                    contentStream.showText(", ");
-
-                    if (comp.getState() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getState());
-                    }
-
-                    contentStream.showText(", ");
-
-                    if (comp.getZipcode() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getZipcode());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 457);
-                    if (comp.getProximity() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getProximity() + " miles");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 448);
-                    if (comp.getSalePrice() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("$" + comp.getSalePrice() + ".00");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 439);
-                    if (comp.getPricePerSqFt() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("$" + comp.getPricePerSqFt());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 430);
-                    if (comp.getOriginalListingPrice() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("$" + comp.getOriginalListingPrice() + ".00");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 421);
-                    if (comp.getCurrentListingPrice() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText("$" + comp.getCurrentListingPrice() + ".00");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 412);
-
-                    if (comp.getSaleDate() == null || comp.getSaleDate().isEmpty()) {
-                        contentStream.showText("N/A" + " / ");
-                    } else {
-                        contentStream.showText(comp.getSaleDate() + " / ");
-                    }
-
-                    if (comp.getListDate() == null || comp.getListDate().isEmpty()) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getListDate());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 403);
-                    if (comp.getDaysOnMarket() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getDaysOnMarket()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 394);
-                    if (comp.getMlsID() == null || comp.getMlsID().isEmpty()) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getMlsID());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 371);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 362);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 353);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 344);
-                    contentStream.showText(comp.getLocation());
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 335);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 326);
-                    if (comp.getSiteORLotSize() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getSiteORLotSize()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 317);
-                    if (comp.getYearBuilt() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getYearBuilt()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 308);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 299);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 290);
-                    if (comp.getStyle() == null || comp.getStyle().isEmpty()) {
-                        contentStream.showText("");
-                    } else {
-                        // TODO: CHANGE
-                        contentStream.showText("Detached");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 272);
-                    if (comp.getTotalRooms() == null || comp.getTotalRooms() == 0) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getTotalRooms()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 22 + 67 * i, 272);
-                    if (comp.getBedrooms() == null || comp.getBedrooms() == 0) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getBedrooms()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 22 + 23 + 67 * i, 272);
-                    if (comp.getBathrooms() == null || comp.getBathrooms() == 0.0) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getBathrooms()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 263);
-                    if (comp.getGrossLivingArea() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(String.valueOf(comp.getGrossLivingArea()));
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    // Basement & Finish
-                    contentStream.newLineAtOffset(370 + 67 * i, 254);
-                    if (comp.getBasement() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    // Heating & Cooling
-                    contentStream.newLineAtOffset(370 + 67 * i, 245);
-                    if (comp.getHeating() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getHeating());
-                    }
-
-                    contentStream.showText(" / ");
-
-                    if (comp.getCooling() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getCooling());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 236);
-                    if (comp.getGarage() == null) {
-                        contentStream.showText("");
-                    } else {
-                        contentStream.showText(comp.getGarage());
-                    }
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 227);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-
-                    contentStream.setFont(PDType1Font.HELVETICA, 5);
-                    contentStream.setNonStrokingColor(Color.BLACK);
-                    contentStream.beginText();
-
-                    contentStream.newLineAtOffset(370 + 67 * i, 218);
-                    contentStream.showText("");
-
-                    contentStream.endText();
-                }
+//                for (int i = 0; i < 3; i++) {
+//
+//                    ComparablePropertyInformation comp = brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(i);
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 483);
+//                    if (comp.getAddress() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getAddress());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 474);
+//                    if (comp.getCity() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getCity());
+//                    }
+//
+//                    contentStream.showText(", ");
+//
+//                    if (comp.getState() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getState());
+//                    }
+//
+//                    contentStream.showText(", ");
+//
+//                    if (comp.getZipcode() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getZipcode());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 457);
+//                    if (comp.getProximity() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getProximity() + " miles");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 448);
+//                    contentStream.showText("N/A");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 439);
+//                    if (comp.getPricePerSqFt() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("$" + comp.getPricePerSqFt());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 430);
+//                    if (comp.getOriginalListingPrice() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("$" + comp.getOriginalListingPrice() + ".00");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 421);
+//                    if (comp.getCurrentListingPrice() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("$" + comp.getCurrentListingPrice() + ".00");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 412);
+//                    if (comp.getListDate() == null || comp.getListDate().isEmpty()) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("N/A" + " / " + comp.getListDate());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 403);
+//                    if (comp.getDaysOnMarket() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getDaysOnMarket()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 394);
+//                    if (comp.getMlsID() == null || comp.getMlsID().isEmpty()) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getMlsID());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 371);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 362);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 353);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 344);
+//                    contentStream.showText(comp.getLocation());
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 335);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 326);
+//                    if (comp.getSiteORLotSize() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getSiteORLotSize()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 317);
+//                    if (comp.getYearBuilt() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getYearBuilt()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 308);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 299);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 290);
+//                    if (comp.getStyle() == null || comp.getStyle().isEmpty()) {
+//                        contentStream.showText("");
+//                    } else {
+//                        // TODO: CHANGE
+//                        contentStream.showText("Detached");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 272);
+//                    if (comp.getTotalRooms() == null || comp.getTotalRooms() == 0) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getTotalRooms()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 22 + 67 * i, 272);
+//                    if (comp.getBedrooms() == null || comp.getBedrooms() == 0) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getBedrooms()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 22 + 23 + 67 * i, 272);
+//                    if (comp.getBathrooms() == null || comp.getBathrooms() == 0.0) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getBathrooms()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 263);
+//                    if (comp.getGrossLivingArea() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getGrossLivingArea()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    // Basement & Finish
+//                    contentStream.newLineAtOffset(168 + 67 * i, 254);
+//                    if (comp.getBasement() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    // Heating & Cooling
+//                    contentStream.newLineAtOffset(168 + 67 * i, 245);
+//                    if (comp.getHeating() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getHeating());
+//                    }
+//
+//                    contentStream.showText(" / ");
+//
+//                    if (comp.getCooling() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getCooling());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 236);
+//                    if (comp.getGarage() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getGarage());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 227);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(168 + 67 * i, 218);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//                }
+//
+//                for (int i = 0; i < 3; i++) {
+//
+//                    ComparablePropertyInformation comp = brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(i);
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 483);
+//                    if (comp.getAddress() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getAddress());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 474);
+//                    if (comp.getCity() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getCity());
+//                    }
+//
+//                    contentStream.showText(", ");
+//
+//                    if (comp.getState() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getState());
+//                    }
+//
+//                    contentStream.showText(", ");
+//
+//                    if (comp.getZipcode() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getZipcode());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 457);
+//                    if (comp.getProximity() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getProximity() + " miles");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 448);
+//                    if (comp.getSalePrice() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("$" + comp.getSalePrice() + ".00");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 439);
+//                    if (comp.getPricePerSqFt() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("$" + comp.getPricePerSqFt());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 430);
+//                    if (comp.getOriginalListingPrice() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("$" + comp.getOriginalListingPrice() + ".00");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 421);
+//                    if (comp.getCurrentListingPrice() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText("$" + comp.getCurrentListingPrice() + ".00");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 412);
+//
+//                    if (comp.getSaleDate() == null || comp.getSaleDate().isEmpty()) {
+//                        contentStream.showText("N/A" + " / ");
+//                    } else {
+//                        contentStream.showText(comp.getSaleDate() + " / ");
+//                    }
+//
+//                    if (comp.getListDate() == null || comp.getListDate().isEmpty()) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getListDate());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 403);
+//                    if (comp.getDaysOnMarket() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getDaysOnMarket()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 394);
+//                    if (comp.getMlsID() == null || comp.getMlsID().isEmpty()) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getMlsID());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 371);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 362);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 353);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 344);
+//                    contentStream.showText(comp.getLocation());
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 335);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 326);
+//                    if (comp.getSiteORLotSize() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getSiteORLotSize()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 317);
+//                    if (comp.getYearBuilt() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getYearBuilt()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 308);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 299);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 290);
+//                    if (comp.getStyle() == null || comp.getStyle().isEmpty()) {
+//                        contentStream.showText("");
+//                    } else {
+//                        // TODO: CHANGE
+//                        contentStream.showText("Detached");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 272);
+//                    if (comp.getTotalRooms() == null || comp.getTotalRooms() == 0) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getTotalRooms()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 22 + 67 * i, 272);
+//                    if (comp.getBedrooms() == null || comp.getBedrooms() == 0) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getBedrooms()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 22 + 23 + 67 * i, 272);
+//                    if (comp.getBathrooms() == null || comp.getBathrooms() == 0.0) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getBathrooms()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 263);
+//                    if (comp.getGrossLivingArea() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(String.valueOf(comp.getGrossLivingArea()));
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    // Basement & Finish
+//                    contentStream.newLineAtOffset(370 + 67 * i, 254);
+//                    if (comp.getBasement() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    // Heating & Cooling
+//                    contentStream.newLineAtOffset(370 + 67 * i, 245);
+//                    if (comp.getHeating() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getHeating());
+//                    }
+//
+//                    contentStream.showText(" / ");
+//
+//                    if (comp.getCooling() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getCooling());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 236);
+//                    if (comp.getGarage() == null) {
+//                        contentStream.showText("");
+//                    } else {
+//                        contentStream.showText(comp.getGarage());
+//                    }
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 227);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//
+//                    contentStream.setFont(PDType1Font.HELVETICA, 5);
+//                    contentStream.setNonStrokingColor(Color.BLACK);
+//                    contentStream.beginText();
+//
+//                    contentStream.newLineAtOffset(370 + 67 * i, 218);
+//                    contentStream.showText("");
+//
+//                    contentStream.endText();
+//                }
             }
 
-            document.save(outputPath);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            document.save(byteArrayOutputStream);
+
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType("application/pdf");
+            metadata.setContentLength(byteArrayOutputStream.size());
+
+            String outputTimestamp = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date());
+            String filename = reportName + "_bpo_report_" + outputTimestamp + ".pdf";
+
+            amazonS3.putObject(new PutObjectRequest(bucketName, filename, inputStream, metadata)
+                    .withCannedAcl(CannedAccessControlList.PublicRead));
+
+            GeneratePresignedUrlRequest urlRequest = new GeneratePresignedUrlRequest(bucketName, filename);
+            URL url = amazonS3.generatePresignedUrl(urlRequest);
+
+            String convertedURL = url.toString();
+            if (convertedURL != null) {
+                convertedURL = StringUtils.substringBeforeLast(convertedURL, "?X-Amz-");
+            }
         }
     }
 }
