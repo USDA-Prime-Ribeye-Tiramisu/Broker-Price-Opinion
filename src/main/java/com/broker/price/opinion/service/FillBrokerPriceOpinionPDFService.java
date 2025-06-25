@@ -54,7 +54,7 @@ public class FillBrokerPriceOpinionPDFService {
 
     public void fillPlaltabPDF(Integer id, String reportName, String metro, String mlsID) throws IOException {
 
-        String inputPath = "PDF input";
+        String inputPath = "bpo_template.pdf";
 
         BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = service.getBrokerPriceOpinionPDFInformation(metro, mlsID);
 
