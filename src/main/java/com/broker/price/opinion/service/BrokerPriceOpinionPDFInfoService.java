@@ -538,9 +538,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.9 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.1 " +
                 "and plfhf.garage_spaces::integer = " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " " +
                 "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 10 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 10 " +
-                "and plfhf.display_mls_number != 'display_mls_number' " +
-                "and plfhf.mls_list_date >= 'date' " +
-                "and plfhf.mls_property_type = 'Single Family Home' " +
+                "and plfhf.display_mls_number != '" + mlsId + "' " +
+                // "and plfhf.mls_list_date >= 'date' " +
                 "order by proximity asc";
 
         resultCompsClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass1, rs -> {
@@ -613,8 +612,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.8 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.2 " +
                     "and plfhf.garage_spaces::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " - 1 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " + 1 " +
                     "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 20 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 20 " +
-                    "and plfhf.display_mls_number != 'display_mls_number' " +
-                    "and plfhf.mls_list_date >= 'date' " +
+                    "and plfhf.display_mls_number != '" + mlsId + "' " +
+                    // "and plfhf.mls_list_date >= 'date' " +
                     "and plfhf.mls_property_type = 'Single Family Home' " +
                     "order by proximity asc";
 
@@ -689,8 +688,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.7 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.3 " +
                     "and plfhf.garage_spaces::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " - 2 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " + 2 " +
                     "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 20 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 20 " +
-                    "and plfhf.display_mls_number != 'display_mls_number' " +
-                    "and plfhf.mls_list_date >= 'date' " +
+                    "and plfhf.display_mls_number != '" + mlsId + "' " +
+                    // "and plfhf.mls_list_date >= 'date' " +
                     "and plfhf.mls_property_type = 'Single Family Home' " +
                     "order by proximity asc";
 
@@ -765,8 +764,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.7 AND " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.3 " +
                     "and plfhf.garage_spaces::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " - 2 AND " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " + 2 " +
                     "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 30 AND " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 30 " +
-                    "and plfhf.display_mls_number != 'display_mls_number' " +
-                    "and plfhf.mls_list_date >= 'date' " +
+                    "and plfhf.display_mls_number != '" + mlsId + "' " +
+                    // "and plfhf.mls_list_date >= 'date' " +
                     "and plfhf.mls_property_type = 'Single Family Home' " +
                     "order by proximity asc";
 
@@ -1155,8 +1154,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.9 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.1 " +
                 "and plfhf.garage_spaces::integer = " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " " +
                 "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 10 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 10 " +
-                "and plfhf.display_mls_number != 'display_mls_number' " +
-                "and plfhf.mls_list_date >= 'date' " +
+                "and plfhf.display_mls_number != '" + mlsId + "' " +
+                // "and plfhf.mls_list_date >= 'date' " +
                 "and plfhf.mls_property_type = 'Single Family Home' " +
                 "order by proximity asc";
 
@@ -1230,8 +1229,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.8 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.2 " +
                     "and plfhf.garage_spaces::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " - 1 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " + 1 " +
                     "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 20 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 20 " +
-                    "and plfhf.display_mls_number != 'display_mls_number' " +
-                    "and plfhf.mls_list_date >= 'date' " +
+                    "and plfhf.display_mls_number != '" + mlsId + "' " +
+                    // "and plfhf.mls_list_date >= 'date' " +
                     "and plfhf.mls_property_type = 'Single Family Home' " +
                     "order by proximity asc";
 
@@ -1306,8 +1305,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.7 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.3 " +
                     "and plfhf.garage_spaces::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " - 2 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " + 2 " +
                     "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 20 and " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 20 " +
-                    "and plfhf.display_mls_number != 'display_mls_number' " +
-                    "and plfhf.mls_list_date >= 'date' " +
+                    "and plfhf.display_mls_number != '" + mlsId + "' " +
+                    // "and plfhf.mls_list_date >= 'date' " +
                     "and plfhf.mls_property_type = 'Single Family Home' " +
                     "order by proximity asc";
 
@@ -1382,8 +1381,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     "and plfhf.lot_size::numeric between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 0.7 AND " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() + " * 1.3 " +
                     "and plfhf.garage_spaces::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " - 2 AND " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() + " + 2 " +
                     "and plfhf.year_built::integer between " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " - 30 AND " + brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() + " + 30 " +
-                    "and plfhf.display_mls_number != 'display_mls_number' " +
-                    "and plfhf.mls_list_date >= 'date' " +
+                    "and plfhf.display_mls_number != '" + mlsId + "' " +
+                    // "and plfhf.mls_list_date >= 'date' " +
                     "and plfhf.mls_property_type = 'Single Family Home' " +
                     "order by proximity asc";
 
