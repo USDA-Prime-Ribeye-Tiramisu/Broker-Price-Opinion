@@ -1,6 +1,8 @@
 package com.broker.price.opinion.controller;
 
 import com.broker.price.opinion.dto.BrokerPriceOpinionFile;
+import com.broker.price.opinion.dto.BrokerPriceOpinionPDFInfoDTO;
+import com.broker.price.opinion.service.BrokerPriceOpinionPDFInfoService;
 import com.broker.price.opinion.service.BrokerPriceOpinionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,13 +15,16 @@ import java.util.Optional;
 public class BrokerPriceOpinionController {
 
     @Autowired
-    private BrokerPriceOpinionService service;
+    private BrokerPriceOpinionService brokerPriceOpinionService;
+
+    @Autowired
+    private BrokerPriceOpinionPDFInfoService brokerPriceOpinionPDFInfoService;
 
     @CrossOrigin
     @GetMapping("/file")
     public Optional<BrokerPriceOpinionFile> getBrokerPriceOpinionFile(
             @RequestParam Long id) {
-        return service.findBrokerPriceOpinion(id);
+        return brokerPriceOpinionService.findBrokerPriceOpinion(id);
     }
 
     @CrossOrigin
@@ -29,12 +34,20 @@ public class BrokerPriceOpinionController {
             @RequestParam("metro") String metro,
             @RequestParam("mls_id") String mls_id) {
 
-        BrokerPriceOpinionFile file = service.generateBrokerPriceOpinionPDFRequest(report_name, metro, mls_id);
+        BrokerPriceOpinionFile file = brokerPriceOpinionService.generateBrokerPriceOpinionPDFRequest(report_name, metro, mls_id);
 
         if (file == null) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
             return new ResponseEntity<>(file, HttpStatus.OK);
         }
+    }
+
+    @CrossOrigin
+    @GetMapping("/info")
+    public BrokerPriceOpinionPDFInfoDTO getBrokerPriceOpinionPDFInformation(
+            @RequestParam("metro") String metro,
+            @RequestParam("mls_id") String mls_id) {
+        return brokerPriceOpinionPDFInfoService.getBrokerPriceOpinionPDFInformation(metro, mls_id);
     }
 }
