@@ -50,14 +50,9 @@ public class FillBrokerPriceOpinionPDFService {
                 .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
     }
 
-    @Autowired
-    private BrokerPriceOpinionPDFInfoService service;
-
-    public void fillPlaltabPDF(Integer id, String reportName, String metro, String mlsID) throws IOException {
+    public String fillPlaltabPDF(String reportName, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) throws IOException {
 
         String inputPath = "bpo_template.pdf";
-
-        BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = service.getBrokerPriceOpinionPDFInformation(metro, mlsID);
 
         try (PDDocument document = PDDocument.load(new File(inputPath))) {
 
@@ -1455,21 +1450,12 @@ public class FillBrokerPriceOpinionPDFService {
             URL url = amazonS3.generatePresignedUrl(urlRequest);
 
             String convertedURL = url.toString();
+
             if (convertedURL != null) {
                 convertedURL = StringUtils.substringBeforeLast(convertedURL, "?X-Amz-");
             }
 
-            updateBrokerPriceOpinionPDFGenerationResult(id, outputTimestamp, convertedURL, "DONE");
+            return convertedURL;
         }
-    }
-
-    public void updateBrokerPriceOpinionPDFGenerationResult(Integer id, String outputTimestamp,
-                                                            String outputFileURL, String status) {
-
-        String UPDATE_SQL = "UPDATE broker_price_opinion_files " +
-                "SET output_timestamp = ?, output_file_url = ?, status = ? " +
-                "WHERE id = ?";
-
-        jdbcTemplate.update(UPDATE_SQL, outputTimestamp, outputFileURL, status, id);
     }
 }
