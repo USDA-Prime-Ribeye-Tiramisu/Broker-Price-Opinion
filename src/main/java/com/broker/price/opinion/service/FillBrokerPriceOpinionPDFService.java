@@ -50,7 +50,7 @@ public class FillBrokerPriceOpinionPDFService {
                 .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
     }
 
-    public String fillPlaltabPDF(String reportName, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) throws IOException {
+    public String fillPlaltabPDF(BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) throws IOException {
 
         String inputPath = "bpo_template.pdf";
 
@@ -924,8 +924,7 @@ public class FillBrokerPriceOpinionPDFService {
                     if (comp.getStyle() == null || comp.getStyle().isEmpty()) {
                         contentStream.showText("");
                     } else {
-                        // TODO: CHANGE
-                        contentStream.showText("Detached");
+                        contentStream.showText(comp.getStyle());
                     }
 
                     contentStream.endText();
@@ -1304,8 +1303,7 @@ public class FillBrokerPriceOpinionPDFService {
                     if (comp.getStyle() == null || comp.getStyle().isEmpty()) {
                         contentStream.showText("");
                     } else {
-                        // TODO: CHANGE
-                        contentStream.showText("Detached");
+                        contentStream.showText(comp.getStyle());
                     }
 
                     contentStream.endText();
@@ -1441,7 +1439,7 @@ public class FillBrokerPriceOpinionPDFService {
             metadata.setContentLength(byteArrayOutputStream.size());
 
             String outputTimestamp = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date());
-            String filename = reportName + "_bpo_report_" + outputTimestamp + ".pdf";
+            String filename = "bpo_report_" + outputTimestamp + ".pdf";
 
             amazonS3.putObject(new PutObjectRequest(bucketName, filename, inputStream, metadata)
                     .withCannedAcl(CannedAccessControlList.PublicRead));
