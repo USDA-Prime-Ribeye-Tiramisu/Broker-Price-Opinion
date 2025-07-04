@@ -14,6 +14,8 @@ public class BrokerPriceOpinionPDFInfoDTO {
 
     private String fullAddress;
 
+    private String propertyID;
+
     private String status;
 
     private String longitude;

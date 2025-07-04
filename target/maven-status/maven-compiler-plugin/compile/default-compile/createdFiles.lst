@@ -1,6 +1,5 @@
 com/broker/price/opinion/dto/DTAPI/CountyRecordingHistory.class
 com/broker/price/opinion/dto/DTAPI/LastMarketSaleInformation.class
-com/broker/price/opinion/repository/BrokerPriceOpinionRepository.class
 com/broker/price/opinion/dto/DTAPI/OwnerVestingInfo.class
 com/broker/price/opinion/dto/DTAPI/response/PropertyDetailReportResponse.class
 com/broker/price/opinion/dto/DTAPI/OwnerInformation.class
@@ -21,10 +20,8 @@ com/broker/price/opinion/dto/DTAPI/PropertyDetailReportData.class
 com/broker/price/opinion/service/BrokerPriceOpinionPDFInfoService.class
 com/broker/price/opinion/dto/NeighborhoodInformation.class
 com/broker/price/opinion/service/FillBrokerPriceOpinionPDFService.class
-com/broker/price/opinion/controller/BrokerPriceOpinionController.class
 com/broker/price/opinion/dto/ComparablePropertyInformation.class
 com/broker/price/opinion/configurations/DataSourceConfiguration.class
-com/broker/price/opinion/service/BrokerPriceOpinionService.class
 com/broker/price/opinion/dto/DTAPI/SubjectProperty.class
 com/broker/price/opinion/dto/DTAPI/TaxInformation.class
 com/broker/price/opinion/dto/DTAPI/MailingAddress.class

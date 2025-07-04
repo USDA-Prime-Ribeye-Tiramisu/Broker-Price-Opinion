@@ -10,27 +10,25 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("bpo")
-public class CHBrokerPriceOpinionController {
+public class BrokerPriceOpinionController {
 
     @Autowired
-    private FillBrokerPriceOpinionPDFService FillBrokerPriceOpinionPDFService;
+    private FillBrokerPriceOpinionPDFService fillBrokerPriceOpinionPDFService;
 
     @Autowired
-    private BrokerPriceOpinionPDFInfoService BrokerPriceOpinionPDFInfoService;
+    private BrokerPriceOpinionPDFInfoService brokerPriceOpinionPDFInfoService;
 
     @CrossOrigin
     @GetMapping("/info")
     public BrokerPriceOpinionPDFInfoDTO getBrokerPriceOpinionPDFInformation(
-            @RequestParam("metro") String metro,
-            @RequestParam("mls_id") String mls_id) {
-        return BrokerPriceOpinionPDFInfoService.getBrokerPriceOpinionPDFInformation(metro, mls_id);
+            @RequestParam("property_id") String property_id) {
+        return brokerPriceOpinionPDFInfoService.getBrokerPriceOpinionPDFInformation(property_id);
     }
 
     @CrossOrigin
     @PostMapping("/generate-pdf")
     public String generateBrokerPriceOpinionPDF(
-            @RequestParam("report_name") String report_name,
             @RequestBody() BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) throws IOException {
-        return FillBrokerPriceOpinionPDFService.fillPlaltabPDF(report_name, brokerPriceOpinionPDFInfoDTO);
+        return fillBrokerPriceOpinionPDFService.fillPlaltabPDF(brokerPriceOpinionPDFInfoDTO);
     }
 }
