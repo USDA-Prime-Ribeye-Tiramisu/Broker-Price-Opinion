@@ -11,7 +11,6 @@ com/broker/price/opinion/dto/BrokerPriceOpinionPDFInfoDTO.class
 com/broker/price/opinion/dto/DensityResponseDTO.class
 com/broker/price/opinion/dto/DTAPI/PropertyCharacteristics.class
 com/broker/price/opinion/BrokerPriceOpinionApplication.class
-com/broker/price/opinion/dto/BrokerPriceOpinionFile.class
 com/broker/price/opinion/dto/OrderInformation.class
 com/broker/price/opinion/dto/PropertyInformation.class
 com/broker/price/opinion/dto/DTAPI/SitusAddress.class
