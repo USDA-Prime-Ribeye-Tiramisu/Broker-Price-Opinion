@@ -337,8 +337,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         if (queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()) {
-            String hasPool = (String) queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool");
-            propertyInformation.setView("true".equals(hasPool) ? "Yes" : "No");
+            String hasView = (String) queryTargetPropertyInfoPlatlabResult.get(0).get("has_view");
+            propertyInformation.setView("true".equals(hasView) ? "Yes" : "No");
         } else {
             propertyInformation.setView(null);
         }
