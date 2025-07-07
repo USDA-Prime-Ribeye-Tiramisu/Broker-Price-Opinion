@@ -336,8 +336,12 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setYearBuilt(null);
         }
 
-        assert queryTargetPropertyInfoPlatlabResult != null;
-        propertyInformation.setView(queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool") != null && queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool").equals("true") ? "Yes" : "No");
+        if (queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()) {
+            String hasPool = (String) queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool");
+            propertyInformation.setView("true".equals(hasPool) ? "Yes" : "No");
+        } else {
+            propertyInformation.setView(null);
+        }
 
         String poolDTAPISource = propertyDetailReportData.PropertyCharacteristics.Pool;
         String poolPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
