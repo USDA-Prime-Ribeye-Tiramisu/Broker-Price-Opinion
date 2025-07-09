@@ -85,7 +85,7 @@ public class LastMarketSaleInformation {
     public Double SecondMortgageInterestRate;
 
     @JsonProperty("SecondMortgageInterestType")
-    public Double SecondMortgageInterestType;
+    public String SecondMortgageInterestType;
 
     @JsonProperty("LastMarketSaleVerified")
     public Boolean LastMarketSaleVerified;
