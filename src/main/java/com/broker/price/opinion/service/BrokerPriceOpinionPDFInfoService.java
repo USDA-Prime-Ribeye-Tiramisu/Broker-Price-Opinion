@@ -33,11 +33,14 @@ public class BrokerPriceOpinionPDFInfoService {
     @Value("${dt.api.client.secret.key}")
     private String DTAPIClientSecretKey;
 
+    private final JdbcTemplate trinoJdbcTemplate;
     private final JdbcTemplate prodBackupJdbcTemplate;
 
     @Autowired
     public BrokerPriceOpinionPDFInfoService(
+            @Qualifier("trinoJdbcTemplate") JdbcTemplate trinoJdbcTemplate,
             @Qualifier("prodBackupJdbcTemplate") JdbcTemplate prodBackupJdbcTemplate) {
+        this.trinoJdbcTemplate = trinoJdbcTemplate;
         this.prodBackupJdbcTemplate = prodBackupJdbcTemplate;
     }
 
