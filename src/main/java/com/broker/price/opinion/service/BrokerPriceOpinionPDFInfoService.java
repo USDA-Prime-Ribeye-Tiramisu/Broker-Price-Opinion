@@ -66,71 +66,94 @@ public class BrokerPriceOpinionPDFInfoService {
         brokerPriceOpinionPDFInfoDTO.setLatitude(propertyDetailReportData.LocationInformation.Latitude);
         brokerPriceOpinionPDFInfoDTO.setLongitude(propertyDetailReportData.LocationInformation.Longitude);
 
-        String queryTargetPropertyInfoPlatlab = "select " +
-                "plfhf.address, " +
-                "plfhf.city, " +
-                "plfhf.state, " +
-                "plfhf.zip, " +
-                "plfhf.county, " +
-                "plfhf.parcel_number, " +
-                "replace(plfhf.style, ',', ', ') as style, " +
-                "plfhf.square_feet::int, " +
-                "plfhf.bedrooms::int, " +
-                "plfhf.bathrooms_full::int, " +
-                "plfhf.bathrooms_half::int, " +
-                "plfhf.garage_spaces::int, " +
-                "plfhf.year_built::int, " +
-                "plfhf.has_view, " +
-                "plfhf.has_pool, " +
-                "plfhf.fireplaces::int, " +
-                "replace(plfhf.occupant_type, ',', ', ') as occupant_type, " +
-                "case " +
-                "   when plfhf.status = 'expired' then 'Expired' " +
-                "   when plfhf.status = 'pending' or plfhf.status = 'Contingent' then 'Pending' " +
-                "   when plfhf.status = 'active' then 'Active' " +
-                "   when plfhf.status = 'withdrawn' or plfhf.status = 'cancelled' then 'Withdrawn' " +
-                "   when plfhf.status = 'sold' or plfhf.status = 'rented' or plfhf.status = 'off_market' then 'Closed' " +
-                "   else null " +
-                "end as status, " +
-                "plfhf.price::int, " +
-                "plfhf.listing_office_name, " +
-                "plfhf.listing_agent_phone, " +
-                "plfhf.annual_tax::float, " +
-                "plfhf.zoning, " +
-                "case " +
-                "   when plfhf.lot_size_display is not null and plfhf.lot_size_display::numeric != 0 and plfhf.lot_size_units = 'Acres' then plfhf.lot_size_area::float8 " +
-                "   when plfhf.lot_size_display is not null and plfhf.lot_size_display::numeric != 0 and plfhf.lot_size_units = 'Square Feet' then plfhf.lot_size_area::float8 / 43560 " +
-                "   when plfhf.lot_size is not null and plfhf.lot_size::numeric != 0 and plfhf.lot_size_units = 'Acres' then plfhf.lot_size_area::float8 " +
-                "   when plfhf.lot_size is not null and plfhf.lot_size::numeric != 0 and plfhf.lot_size_units = 'Square Feet' then plfhf.lot_size_area::float8 / 43560 " +
-                "   when plfhf.lot_size_square_feet is not null and plfhf.lot_size_square_feet::numeric != 0 then plfhf.lot_size_square_feet::float8 / 43560 " +
-                "   when plfhf.lot_size_area is not null and plfhf.lot_size_area::numeric != 0 and plfhf.lot_size_units = 'Acres' then plfhf.lot_size_area::float8 " +
-                "   when plfhf.lot_size_area is not null and plfhf.lot_size_area::numeric != 0 and plfhf.lot_size_units = 'Square Feet' then plfhf.lot_size_area::float8 / 43560 " +
-                "   else null " +
-                "end as lot_size " +
-                "from platlab_listings_full_history_filtered plfhf " +
-                "where plfhf.ref_id = '" + propertyID + "' " +
+        String queryTargetPropertyByPropertyId = "select " +
+                "plfc.metro, plfc.mlsid " +
+                "from platlab_listings_full_current plfc " +
+                "where plfc.ref_id = '100000377' " +
+                "order by plfc.modificationtimestamp desc " +
                 "limit 1";
 
-        List<Map<String, Object>> queryTargetPropertyInfoPlatlabResult = prodBackupJdbcTemplate.query(queryTargetPropertyInfoPlatlab, rs -> {
-            List<Map<String, Object>> rows = new ArrayList<>();
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+        List<ListingDTO> result = prodBackupJdbcTemplate.query(queryTargetPropertyByPropertyId, (rs, rowNum) -> new ListingDTO(
+                rs.getString("metro"),
+                rs.getString("mlsid")
+        ));
 
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnLabel(i);
-                    Object value = rs.getObject(i);
-                    row.put(columnName, value);
+        List<Map<String, Object>> targetPropertyInfoPlatlabResult = null;
+
+        if (!result.isEmpty()) {
+            String queryTargetPropertyInfoPlatlab = "SELECT " +
+                    "lc.address, " +
+                    "lc.city, " +
+                    "lc.state, " +
+                    "lc.zip, " +
+                    "lc.county, " +
+                    "lc.parcel_number, " +
+                    "REPLACE(lc.style, ',', ', ') AS style, " +
+                    "CAST(lc.square_feet AS INTEGER) AS square_feet, " +
+                    "CAST(lc.bedrooms AS INTEGER) AS bedrooms, " +
+                    "CAST(lc.bathrooms_full AS INTEGER) AS bathrooms_full, " +
+                    "CAST(lc.bathrooms_half AS INTEGER) AS bathrooms_half, " +
+                    "CAST(lc.garage_spaces AS INTEGER) AS garage_spaces, " +
+                    "CAST(lc.year_built AS INTEGER) AS year_built, " +
+                    "lc.has_view, " +
+                    "lc.has_pool, " +
+                    "CAST(lc.fireplaces AS INTEGER) AS fireplaces, " +
+                    "REPLACE(lc.occupant_type, ',', ', ') AS occupant_type, " +
+                    "CASE " +
+                    "   WHEN lc.status = 'expired' THEN 'Expired' " +
+                    "   WHEN lc.status = 'pending' OR lc.status = 'Contingent' THEN 'Pending' " +
+                    "   WHEN lc.status = 'active' THEN 'Active' " +
+                    "   WHEN lc.status = 'withdrawn' OR lc.status = 'cancelled' THEN 'Withdrawn' " +
+                    "   WHEN lc.status IN ('sold', 'rented', 'off_market') THEN 'Closed' " +
+                    "   ELSE NULL " +
+                    "END AS status, " +
+                    "CAST(lc.price AS INTEGER) AS price, " +
+                    "lc.listing_office_name, " +
+                    "lc.listing_agent_phone, " +
+                    "CAST(lc.annual_tax AS DOUBLE) AS annual_tax, " +
+                    "lc.zoning, " +
+                    "CASE " +
+                    "   WHEN lc.lot_size_display IS NOT NULL AND CAST(lc.lot_size_display AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) "+
+                    "   WHEN lc.lot_size_display IS NOT NULL AND CAST(lc.lot_size_display AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) / 43560 " +
+                    "   WHEN lc.lot_size IS NOT NULL AND CAST(lc.lot_size AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) " +
+                    "   WHEN lc.lot_size IS NOT NULL AND CAST(lc.lot_size AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) / 43560 " +
+                    "   WHEN lc.lot_size_square_feet IS NOT NULL AND CAST(lc.lot_size_square_feet AS DOUBLE) != 0 " +
+                    "       THEN CAST(lc.lot_size_square_feet AS DOUBLE) / 43560 " +
+                    "   WHEN lc.lot_size_area IS NOT NULL AND CAST(lc.lot_size_area AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) " +
+                    "   WHEN lc.lot_size_area IS NOT NULL AND CAST(lc.lot_size_area AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) / 43560 " +
+                    "   ELSE NULL " +
+                    "END AS lot_size " +
+                    "FROM iceberg.platlab.listing_current lc " +
+                    "WHERE " +
+                    "lc.mls_id = '" + result.get(0).getMetro() + "' AND lc.display_mls_number = '"  + result.get(0).getMlsid() + "'";
+
+            targetPropertyInfoPlatlabResult = trinoJdbcTemplate.query(queryTargetPropertyInfoPlatlab, rs -> {
+                List<Map<String, Object>> rows = new ArrayList<>();
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(i);
+                        row.put(columnName, value);
+                    }
+                    rows.add(row);
                 }
-                rows.add(row);
-            }
 
-            return rows;
-        });
+                return rows;
+            });
+        }
 
-        String statusPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("status")
+        String statusPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("status")
                 : null;
 
         brokerPriceOpinionPDFInfoDTO.setStatus(statusPlatlabSource);
@@ -138,8 +161,8 @@ public class BrokerPriceOpinionPDFInfoService {
         OrderInformation orderInformation = new OrderInformation();
 
         String addressDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.StreetAddress;
-        String addressPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("address")
+        String addressPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("address")
                 : null;
 
         if (addressDTAPISource != null && !addressDTAPISource.isEmpty()) {
@@ -151,8 +174,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String cityDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.City;
-        String cityPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("city")
+        String cityPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("city")
                 : null;
 
         if (cityDTAPISource != null && !cityDTAPISource.isEmpty()) {
@@ -164,8 +187,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String stateDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.State;
-        String statePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("state")
+        String statePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("state")
                 : null;
 
         if (stateDTAPISource != null && !stateDTAPISource.isEmpty()) {
@@ -177,8 +200,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String zipcodeDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.Zip9;
-        String zipcodePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("zip")
+        String zipcodePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("zip")
                 : null;
 
         if (zipcodeDTAPISource != null && !zipcodeDTAPISource.isEmpty()) {
@@ -190,8 +213,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String countyDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.County;
-        String countyPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("county")
+        String countyPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("county")
                 : null;
 
         if (countyDTAPISource != null && !countyDTAPISource.isEmpty()) {
@@ -202,8 +225,8 @@ public class BrokerPriceOpinionPDFInfoService {
             orderInformation.setCounty(null);
         }
 
-        String parcelIDPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("parcel_number")
+        String parcelIDPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("parcel_number")
                 : null;
 
         if (parcelIDPlatlabSource != null && !parcelIDPlatlabSource.isEmpty()) {
@@ -221,8 +244,8 @@ public class BrokerPriceOpinionPDFInfoService {
         propertyInformation.setPropertyType(propertyDetailReportData.SiteInformation.LandUse);
 
         String styleDTAPISource = propertyDetailReportData.PropertyCharacteristics.Style;
-        String stylePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("style")
+        String stylePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("style")
                 : null;
 
         if (styleDTAPISource != null && !styleDTAPISource.isEmpty()) {
@@ -234,8 +257,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer sqftDTAPISource = propertyDetailReportData.PropertyCharacteristics.LivingArea;
-        Integer sqftPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("square_feet")
+        Integer sqftPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("square_feet")
                 : null;
 
         if (sqftDTAPISource != null && sqftDTAPISource != 0) {
@@ -255,8 +278,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer bedroomsDTAPISource = propertyDetailReportData.PropertyCharacteristics.Bedrooms;
-        Integer bedroomsPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("bedrooms")
+        Integer bedroomsPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("bedrooms")
                 : null;
 
         if (bedroomsDTAPISource != null && bedroomsDTAPISource != 0) {
@@ -279,9 +302,9 @@ public class BrokerPriceOpinionPDFInfoService {
         int bathroomsFullPlatlabSource = 0;
         int bathroomsHalfPlatlabSource = 0;
 
-        if (queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()) {
-            bathroomsFullPlatlabSource = (queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") != null) ? (int) queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") : 0;
-            bathroomsHalfPlatlabSource = (queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") != null) ? (int) queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") : 0;
+        if (targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()) {
+            bathroomsFullPlatlabSource = (targetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") != null) ? (int) targetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") : 0;
+            bathroomsHalfPlatlabSource = (targetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") != null) ? (int) targetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") : 0;
         }
 
         bathroomsPlatlabSource = bathroomsFullPlatlabSource + bathroomsHalfPlatlabSource / 2.0;
@@ -295,8 +318,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer garageSpacesDTAPISource = propertyDetailReportData.PropertyCharacteristics.GarageCapacity;
-        Integer garageSpacesPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("garage_spaces")
+        Integer garageSpacesPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("garage_spaces")
                 : null;
 
         if (garageSpacesDTAPISource != null) {
@@ -327,8 +350,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer yearBuiltDTAPISource = propertyDetailReportData.PropertyCharacteristics.YearBuilt;
-        Integer yearBuiltPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("year_built")
+        Integer yearBuiltPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("year_built")
                 : null;
 
         if (yearBuiltDTAPISource != null) {
@@ -339,16 +362,16 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setYearBuilt(null);
         }
 
-        if (queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()) {
-            String hasView = (String) queryTargetPropertyInfoPlatlabResult.get(0).get("has_view");
+        if (targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()) {
+            String hasView = (String) targetPropertyInfoPlatlabResult.get(0).get("has_view");
             propertyInformation.setView("true".equals(hasView) ? "Yes" : "No");
         } else {
             propertyInformation.setView(null);
         }
 
         String poolDTAPISource = propertyDetailReportData.PropertyCharacteristics.Pool;
-        String poolPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool") != null && queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool").equals("true") ? "Yes" : "No"
+        String poolPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? targetPropertyInfoPlatlabResult.get(0).get("has_pool") != null && targetPropertyInfoPlatlabResult.get(0).get("has_pool").equals("true") ? "Yes" : "No"
                 : null;
 
         if (poolDTAPISource != null && !poolDTAPISource.isEmpty()) {
@@ -379,8 +402,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer numberOfFireplacesDTAPISource = propertyDetailReportData.PropertyCharacteristics.FirePlaceCount;
-        Integer numberOfFireplacesPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("fireplaces")
+        Integer numberOfFireplacesPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("fireplaces")
                 : null;
 
         if (numberOfFireplacesDTAPISource != null) {
@@ -400,8 +423,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String occupancyDTAPISource = propertyDetailReportData.OwnerInformation.Occupancy;
-        String occupancyPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("occupant_type")
+        String occupancyPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("occupant_type")
                 : null;
 
         if (occupancyDTAPISource != null && !occupancyDTAPISource.isEmpty()) {
@@ -412,14 +435,14 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setOccupancy(null);
         }
 
-        String isListedPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? queryTargetPropertyInfoPlatlabResult.get(0).get("status").equals("Active") ? "Yes" : "No"
+        String isListedPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? targetPropertyInfoPlatlabResult.get(0).get("status").equals("Active") ? "Yes" : "No"
                 : null;
 
         propertyInformation.setIsListed(isListedPlatlabSource);
 
-        Integer listPricePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty() && queryTargetPropertyInfoPlatlabResult.get(0).get("status").equals("Active")
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("price")
+        Integer listPricePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty() && targetPropertyInfoPlatlabResult.get(0).get("status").equals("Active")
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("price")
                 : null;
 
         if (listPricePlatlabSource != null && listPricePlatlabSource != 0) {
@@ -428,8 +451,8 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setListPrice(null);
         }
 
-        String nameOfListingCompanyPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("listing_office_name")
+        String nameOfListingCompanyPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("listing_office_name")
                 : null;
 
         if (nameOfListingCompanyPlatlabSource != null && !nameOfListingCompanyPlatlabSource.isEmpty()) {
@@ -438,8 +461,8 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setNameOfListingCompany(null);
         }
 
-        String listingAgentPhonePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("listing_agent_phone")
+        String listingAgentPhonePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("listing_agent_phone")
                 : null;
 
         if (listingAgentPhonePlatlabSource != null && !listingAgentPhonePlatlabSource.isEmpty()) {
@@ -465,8 +488,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Double currentTaxDTAPISource = propertyDetailReportData.TaxInformation.PropertyTax;
-        Double currentTaxPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Double) queryTargetPropertyInfoPlatlabResult.get(0).get("annual_tax")
+        Double currentTaxPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Double) targetPropertyInfoPlatlabResult.get(0).get("annual_tax")
                 : null;
 
         if (currentTaxDTAPISource != null && currentTaxDTAPISource != 0.0) {
@@ -478,8 +501,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String zoningDTAPISource = propertyDetailReportData.SiteInformation.Zoning;
-        String zoningPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("zoning")
+        String zoningPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("zoning")
                 : null;
 
         if (zoningDTAPISource != null && !zoningDTAPISource.isEmpty()) {
@@ -491,8 +514,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Double lotSizeDTAPISource = propertyDetailReportData.SiteInformation.Acres;
-        Double lotSizePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Double) queryTargetPropertyInfoPlatlabResult.get(0).get("lot_size")
+        Double lotSizePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Double) targetPropertyInfoPlatlabResult.get(0).get("lot_size")
                 : null;
 
         if (lotSizeDTAPISource != null && lotSizeDTAPISource != 0.0) {
