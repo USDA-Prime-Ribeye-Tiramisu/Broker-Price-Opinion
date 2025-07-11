@@ -77,6 +77,13 @@
 			<artifactId>lombok</artifactId>
 			<version>1.18.30</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/io.trino/trino-jdbc -->
+		<dependency>
+			<groupId>io.trino</groupId>
+			<artifactId>trino-jdbc</artifactId>
+			<version>464</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>

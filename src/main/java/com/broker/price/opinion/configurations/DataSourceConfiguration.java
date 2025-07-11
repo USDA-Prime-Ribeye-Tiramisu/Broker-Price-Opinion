@@ -27,6 +27,12 @@ public class DataSourceConfiguration {
         return DataSourceBuilder.create().build();
     }
 
+    @Bean(name = "trinoDataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.trino")
+    public DataSource trinoDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
     @Primary
     @Bean(name = "prodJdbcTemplate")
     public JdbcTemplate prodJdbcTemplate(@Qualifier("prodDataSource") DataSource dataSource) {
@@ -35,6 +41,11 @@ public class DataSourceConfiguration {
 
     @Bean(name = "prodBackupJdbcTemplate")
     public JdbcTemplate prodBackupJdbcTemplate(@Qualifier("prodBackupDataSource") DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
+    }
+
+    @Bean(name = "trinoJdbcTemplate")
+    public JdbcTemplate trinoJdbcTemplate(@Qualifier("trinoDataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
 

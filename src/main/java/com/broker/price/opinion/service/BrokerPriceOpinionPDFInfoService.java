@@ -33,11 +33,14 @@ public class BrokerPriceOpinionPDFInfoService {
     @Value("${dt.api.client.secret.key}")
     private String DTAPIClientSecretKey;
 
+    private final JdbcTemplate trinoJdbcTemplate;
     private final JdbcTemplate prodBackupJdbcTemplate;
 
     @Autowired
     public BrokerPriceOpinionPDFInfoService(
+            @Qualifier("trinoJdbcTemplate") JdbcTemplate trinoJdbcTemplate,
             @Qualifier("prodBackupJdbcTemplate") JdbcTemplate prodBackupJdbcTemplate) {
+        this.trinoJdbcTemplate = trinoJdbcTemplate;
         this.prodBackupJdbcTemplate = prodBackupJdbcTemplate;
     }
 
@@ -63,71 +66,94 @@ public class BrokerPriceOpinionPDFInfoService {
         brokerPriceOpinionPDFInfoDTO.setLatitude(propertyDetailReportData.LocationInformation.Latitude);
         brokerPriceOpinionPDFInfoDTO.setLongitude(propertyDetailReportData.LocationInformation.Longitude);
 
-        String queryTargetPropertyInfoPlatlab = "select " +
-                "plfhf.address, " +
-                "plfhf.city, " +
-                "plfhf.state, " +
-                "plfhf.zip, " +
-                "plfhf.county, " +
-                "plfhf.parcel_number, " +
-                "replace(plfhf.style, ',', ', ') as style, " +
-                "plfhf.square_feet::int, " +
-                "plfhf.bedrooms::int, " +
-                "plfhf.bathrooms_full::int, " +
-                "plfhf.bathrooms_half::int, " +
-                "plfhf.garage_spaces::int, " +
-                "plfhf.year_built::int, " +
-                "plfhf.has_view, " +
-                "plfhf.has_pool, " +
-                "plfhf.fireplaces::int, " +
-                "replace(plfhf.occupant_type, ',', ', ') as occupant_type, " +
-                "case " +
-                "   when plfhf.status = 'expired' then 'Expired' " +
-                "   when plfhf.status = 'pending' or plfhf.status = 'Contingent' then 'Pending' " +
-                "   when plfhf.status = 'active' then 'Active' " +
-                "   when plfhf.status = 'withdrawn' or plfhf.status = 'cancelled' then 'Withdrawn' " +
-                "   when plfhf.status = 'sold' or plfhf.status = 'rented' or plfhf.status = 'off_market' then 'Closed' " +
-                "   else null " +
-                "end as status, " +
-                "plfhf.price::int, " +
-                "plfhf.listing_office_name, " +
-                "plfhf.listing_agent_phone, " +
-                "plfhf.annual_tax::float, " +
-                "plfhf.zoning, " +
-                "case " +
-                "   when plfhf.lot_size_display is not null and plfhf.lot_size_display::numeric != 0 and plfhf.lot_size_units = 'Acres' then plfhf.lot_size_area::float8 " +
-                "   when plfhf.lot_size_display is not null and plfhf.lot_size_display::numeric != 0 and plfhf.lot_size_units = 'Square Feet' then plfhf.lot_size_area::float8 / 43560 " +
-                "   when plfhf.lot_size is not null and plfhf.lot_size::numeric != 0 and plfhf.lot_size_units = 'Acres' then plfhf.lot_size_area::float8 " +
-                "   when plfhf.lot_size is not null and plfhf.lot_size::numeric != 0 and plfhf.lot_size_units = 'Square Feet' then plfhf.lot_size_area::float8 / 43560 " +
-                "   when plfhf.lot_size_square_feet is not null and plfhf.lot_size_square_feet::numeric != 0 then plfhf.lot_size_square_feet::float8 / 43560 " +
-                "   when plfhf.lot_size_area is not null and plfhf.lot_size_area::numeric != 0 and plfhf.lot_size_units = 'Acres' then plfhf.lot_size_area::float8 " +
-                "   when plfhf.lot_size_area is not null and plfhf.lot_size_area::numeric != 0 and plfhf.lot_size_units = 'Square Feet' then plfhf.lot_size_area::float8 / 43560 " +
-                "   else null " +
-                "end as lot_size " +
-                "from platlab_listings_full_history_filtered plfhf " +
-                "where plfhf.ref_id = '" + propertyID + "' " +
+        String queryTargetPropertyByPropertyId = "select " +
+                "plfc.metro, plfc.mlsid " +
+                "from platlab_listings_full_current plfc " +
+                "where plfc.ref_id = '100000377' " +
+                "order by plfc.modificationtimestamp desc " +
                 "limit 1";
 
-        List<Map<String, Object>> queryTargetPropertyInfoPlatlabResult = prodBackupJdbcTemplate.query(queryTargetPropertyInfoPlatlab, rs -> {
-            List<Map<String, Object>> rows = new ArrayList<>();
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+        List<ListingDTO> result = prodBackupJdbcTemplate.query(queryTargetPropertyByPropertyId, (rs, rowNum) -> new ListingDTO(
+                rs.getString("metro"),
+                rs.getString("mlsid")
+        ));
 
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnLabel(i);
-                    Object value = rs.getObject(i);
-                    row.put(columnName, value);
+        List<Map<String, Object>> targetPropertyInfoPlatlabResult = null;
+
+        if (!result.isEmpty()) {
+            String queryTargetPropertyInfoPlatlab = "SELECT " +
+                    "lc.address, " +
+                    "lc.city, " +
+                    "lc.state, " +
+                    "lc.zip, " +
+                    "lc.county, " +
+                    "lc.parcel_number, " +
+                    "REPLACE(lc.style, ',', ', ') AS style, " +
+                    "CAST(lc.square_feet AS INTEGER) AS square_feet, " +
+                    "CAST(lc.bedrooms AS INTEGER) AS bedrooms, " +
+                    "CAST(lc.bathrooms_full AS INTEGER) AS bathrooms_full, " +
+                    "CAST(lc.bathrooms_half AS INTEGER) AS bathrooms_half, " +
+                    "CAST(lc.garage_spaces AS INTEGER) AS garage_spaces, " +
+                    "CAST(lc.year_built AS INTEGER) AS year_built, " +
+                    "lc.has_view, " +
+                    "lc.has_pool, " +
+                    "CAST(lc.fireplaces AS INTEGER) AS fireplaces, " +
+                    "REPLACE(lc.occupant_type, ',', ', ') AS occupant_type, " +
+                    "CASE " +
+                    "   WHEN lc.status = 'expired' THEN 'Expired' " +
+                    "   WHEN lc.status = 'pending' OR lc.status = 'Contingent' THEN 'Pending' " +
+                    "   WHEN lc.status = 'active' THEN 'Active' " +
+                    "   WHEN lc.status = 'withdrawn' OR lc.status = 'cancelled' THEN 'Withdrawn' " +
+                    "   WHEN lc.status IN ('sold', 'rented', 'off_market') THEN 'Closed' " +
+                    "   ELSE NULL " +
+                    "END AS status, " +
+                    "CAST(lc.price AS INTEGER) AS price, " +
+                    "lc.listing_office_name, " +
+                    "lc.listing_agent_phone, " +
+                    "CAST(lc.annual_tax AS DOUBLE) AS annual_tax, " +
+                    "lc.zoning, " +
+                    "CASE " +
+                    "   WHEN lc.lot_size_display IS NOT NULL AND CAST(lc.lot_size_display AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) "+
+                    "   WHEN lc.lot_size_display IS NOT NULL AND CAST(lc.lot_size_display AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) / 43560 " +
+                    "   WHEN lc.lot_size IS NOT NULL AND CAST(lc.lot_size AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) " +
+                    "   WHEN lc.lot_size IS NOT NULL AND CAST(lc.lot_size AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) / 43560 " +
+                    "   WHEN lc.lot_size_square_feet IS NOT NULL AND CAST(lc.lot_size_square_feet AS DOUBLE) != 0 " +
+                    "       THEN CAST(lc.lot_size_square_feet AS DOUBLE) / 43560 " +
+                    "   WHEN lc.lot_size_area IS NOT NULL AND CAST(lc.lot_size_area AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) " +
+                    "   WHEN lc.lot_size_area IS NOT NULL AND CAST(lc.lot_size_area AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet' " +
+                    "       THEN CAST(lc.lot_size_area AS DOUBLE) / 43560 " +
+                    "   ELSE NULL " +
+                    "END AS lot_size " +
+                    "FROM iceberg.platlab.listing_current lc " +
+                    "WHERE " +
+                    "lc.mls_id = '" + result.get(0).getMetro() + "' AND lc.display_mls_number = '"  + result.get(0).getMlsid() + "'";
+
+            targetPropertyInfoPlatlabResult = trinoJdbcTemplate.query(queryTargetPropertyInfoPlatlab, rs -> {
+                List<Map<String, Object>> rows = new ArrayList<>();
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(i);
+                        row.put(columnName, value);
+                    }
+                    rows.add(row);
                 }
-                rows.add(row);
-            }
 
-            return rows;
-        });
+                return rows;
+            });
+        }
 
-        String statusPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("status")
+        String statusPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("status")
                 : null;
 
         brokerPriceOpinionPDFInfoDTO.setStatus(statusPlatlabSource);
@@ -135,8 +161,8 @@ public class BrokerPriceOpinionPDFInfoService {
         OrderInformation orderInformation = new OrderInformation();
 
         String addressDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.StreetAddress;
-        String addressPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("address")
+        String addressPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("address")
                 : null;
 
         if (addressDTAPISource != null && !addressDTAPISource.isEmpty()) {
@@ -148,8 +174,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String cityDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.City;
-        String cityPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("city")
+        String cityPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("city")
                 : null;
 
         if (cityDTAPISource != null && !cityDTAPISource.isEmpty()) {
@@ -161,8 +187,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String stateDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.State;
-        String statePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("state")
+        String statePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("state")
                 : null;
 
         if (stateDTAPISource != null && !stateDTAPISource.isEmpty()) {
@@ -174,8 +200,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String zipcodeDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.Zip9;
-        String zipcodePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("zip")
+        String zipcodePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("zip")
                 : null;
 
         if (zipcodeDTAPISource != null && !zipcodeDTAPISource.isEmpty()) {
@@ -187,8 +213,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String countyDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.County;
-        String countyPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("county")
+        String countyPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("county")
                 : null;
 
         if (countyDTAPISource != null && !countyDTAPISource.isEmpty()) {
@@ -199,8 +225,8 @@ public class BrokerPriceOpinionPDFInfoService {
             orderInformation.setCounty(null);
         }
 
-        String parcelIDPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("parcel_number")
+        String parcelIDPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("parcel_number")
                 : null;
 
         if (parcelIDPlatlabSource != null && !parcelIDPlatlabSource.isEmpty()) {
@@ -218,8 +244,8 @@ public class BrokerPriceOpinionPDFInfoService {
         propertyInformation.setPropertyType(propertyDetailReportData.SiteInformation.LandUse);
 
         String styleDTAPISource = propertyDetailReportData.PropertyCharacteristics.Style;
-        String stylePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("style")
+        String stylePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("style")
                 : null;
 
         if (styleDTAPISource != null && !styleDTAPISource.isEmpty()) {
@@ -231,8 +257,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer sqftDTAPISource = propertyDetailReportData.PropertyCharacteristics.LivingArea;
-        Integer sqftPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("square_feet")
+        Integer sqftPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("square_feet")
                 : null;
 
         if (sqftDTAPISource != null && sqftDTAPISource != 0) {
@@ -252,8 +278,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer bedroomsDTAPISource = propertyDetailReportData.PropertyCharacteristics.Bedrooms;
-        Integer bedroomsPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("bedrooms")
+        Integer bedroomsPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("bedrooms")
                 : null;
 
         if (bedroomsDTAPISource != null && bedroomsDTAPISource != 0) {
@@ -276,9 +302,9 @@ public class BrokerPriceOpinionPDFInfoService {
         int bathroomsFullPlatlabSource = 0;
         int bathroomsHalfPlatlabSource = 0;
 
-        if (queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()) {
-            bathroomsFullPlatlabSource = (queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") != null) ? (int) queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") : 0;
-            bathroomsHalfPlatlabSource = (queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") != null) ? (int) queryTargetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") : 0;
+        if (targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()) {
+            bathroomsFullPlatlabSource = (targetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") != null) ? (int) targetPropertyInfoPlatlabResult.get(0).get("bathrooms_full") : 0;
+            bathroomsHalfPlatlabSource = (targetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") != null) ? (int) targetPropertyInfoPlatlabResult.get(0).get("bathrooms_half") : 0;
         }
 
         bathroomsPlatlabSource = bathroomsFullPlatlabSource + bathroomsHalfPlatlabSource / 2.0;
@@ -292,8 +318,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer garageSpacesDTAPISource = propertyDetailReportData.PropertyCharacteristics.GarageCapacity;
-        Integer garageSpacesPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("garage_spaces")
+        Integer garageSpacesPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("garage_spaces")
                 : null;
 
         if (garageSpacesDTAPISource != null) {
@@ -324,8 +350,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer yearBuiltDTAPISource = propertyDetailReportData.PropertyCharacteristics.YearBuilt;
-        Integer yearBuiltPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("year_built")
+        Integer yearBuiltPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("year_built")
                 : null;
 
         if (yearBuiltDTAPISource != null) {
@@ -336,16 +362,16 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setYearBuilt(null);
         }
 
-        if (queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()) {
-            String hasView = (String) queryTargetPropertyInfoPlatlabResult.get(0).get("has_view");
+        if (targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()) {
+            String hasView = (String) targetPropertyInfoPlatlabResult.get(0).get("has_view");
             propertyInformation.setView("true".equals(hasView) ? "Yes" : "No");
         } else {
             propertyInformation.setView(null);
         }
 
         String poolDTAPISource = propertyDetailReportData.PropertyCharacteristics.Pool;
-        String poolPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool") != null && queryTargetPropertyInfoPlatlabResult.get(0).get("has_pool").equals("true") ? "Yes" : "No"
+        String poolPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? targetPropertyInfoPlatlabResult.get(0).get("has_pool") != null && targetPropertyInfoPlatlabResult.get(0).get("has_pool").equals("true") ? "Yes" : "No"
                 : null;
 
         if (poolDTAPISource != null && !poolDTAPISource.isEmpty()) {
@@ -376,8 +402,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Integer numberOfFireplacesDTAPISource = propertyDetailReportData.PropertyCharacteristics.FirePlaceCount;
-        Integer numberOfFireplacesPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("fireplaces")
+        Integer numberOfFireplacesPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("fireplaces")
                 : null;
 
         if (numberOfFireplacesDTAPISource != null) {
@@ -397,8 +423,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String occupancyDTAPISource = propertyDetailReportData.OwnerInformation.Occupancy;
-        String occupancyPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("occupant_type")
+        String occupancyPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("occupant_type")
                 : null;
 
         if (occupancyDTAPISource != null && !occupancyDTAPISource.isEmpty()) {
@@ -409,14 +435,14 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setOccupancy(null);
         }
 
-        String isListedPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? queryTargetPropertyInfoPlatlabResult.get(0).get("status").equals("Active") ? "Yes" : "No"
+        String isListedPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? targetPropertyInfoPlatlabResult.get(0).get("status").equals("Active") ? "Yes" : "No"
                 : null;
 
         propertyInformation.setIsListed(isListedPlatlabSource);
 
-        Integer listPricePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty() && queryTargetPropertyInfoPlatlabResult.get(0).get("status").equals("Active")
-                ? (Integer) queryTargetPropertyInfoPlatlabResult.get(0).get("price")
+        Integer listPricePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty() && targetPropertyInfoPlatlabResult.get(0).get("status").equals("Active")
+                ? (Integer) targetPropertyInfoPlatlabResult.get(0).get("price")
                 : null;
 
         if (listPricePlatlabSource != null && listPricePlatlabSource != 0) {
@@ -425,8 +451,8 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setListPrice(null);
         }
 
-        String nameOfListingCompanyPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("listing_office_name")
+        String nameOfListingCompanyPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("listing_office_name")
                 : null;
 
         if (nameOfListingCompanyPlatlabSource != null && !nameOfListingCompanyPlatlabSource.isEmpty()) {
@@ -435,8 +461,8 @@ public class BrokerPriceOpinionPDFInfoService {
             propertyInformation.setNameOfListingCompany(null);
         }
 
-        String listingAgentPhonePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("listing_agent_phone")
+        String listingAgentPhonePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("listing_agent_phone")
                 : null;
 
         if (listingAgentPhonePlatlabSource != null && !listingAgentPhonePlatlabSource.isEmpty()) {
@@ -462,8 +488,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Double currentTaxDTAPISource = propertyDetailReportData.TaxInformation.PropertyTax;
-        Double currentTaxPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Double) queryTargetPropertyInfoPlatlabResult.get(0).get("annual_tax")
+        Double currentTaxPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Double) targetPropertyInfoPlatlabResult.get(0).get("annual_tax")
                 : null;
 
         if (currentTaxDTAPISource != null && currentTaxDTAPISource != 0.0) {
@@ -475,8 +501,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         String zoningDTAPISource = propertyDetailReportData.SiteInformation.Zoning;
-        String zoningPlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (String) queryTargetPropertyInfoPlatlabResult.get(0).get("zoning")
+        String zoningPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (String) targetPropertyInfoPlatlabResult.get(0).get("zoning")
                 : null;
 
         if (zoningDTAPISource != null && !zoningDTAPISource.isEmpty()) {
@@ -488,8 +514,8 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         Double lotSizeDTAPISource = propertyDetailReportData.SiteInformation.Acres;
-        Double lotSizePlatlabSource = queryTargetPropertyInfoPlatlabResult != null && !queryTargetPropertyInfoPlatlabResult.isEmpty()
-                ? (Double) queryTargetPropertyInfoPlatlabResult.get(0).get("lot_size")
+        Double lotSizePlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
+                ? (Double) targetPropertyInfoPlatlabResult.get(0).get("lot_size")
                 : null;
 
         if (lotSizeDTAPISource != null && lotSizeDTAPISource != 0.0) {
@@ -520,11 +546,48 @@ public class BrokerPriceOpinionPDFInfoService {
 
         PropertyDetailReportResponse propertyDetailReportResponseComparableProperty;
 
-        List<Map<String, Object>> resultCompsClosed;
+        List<ListingDTO> resultCompsListingsSearchClosed;
 
-        String queryCompsClosedPass1 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "sold", 1);
+        String queryCompsClosedPass1 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Closed", 1);
 
-        resultCompsClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass1, rs -> {
+        resultCompsListingsSearchClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass1, (rs, rowNum) -> new ListingDTO(
+                rs.getString("metro"),
+                rs.getString("mlsid")
+        ));
+
+        if (resultCompsListingsSearchClosed.size() < 3) {
+
+            String queryCompsClosedPass2 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Closed", 2);
+
+            resultCompsListingsSearchClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass2, (rs, rowNum) -> new ListingDTO(
+                    rs.getString("metro"),
+                    rs.getString("mlsid")
+            ));
+        }
+
+        if (resultCompsListingsSearchClosed.size() < 3) {
+
+            String queryCompsClosedPass3 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Closed", 3);
+
+            resultCompsListingsSearchClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass3, (rs, rowNum) -> new ListingDTO(
+                    rs.getString("metro"),
+                    rs.getString("mlsid")
+            ));
+        }
+
+        if (resultCompsListingsSearchClosed.size() < 3) {
+
+            String queryCompsClosedPass4 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Closed", 4);
+
+            resultCompsListingsSearchClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass4, (rs, rowNum) -> new ListingDTO(
+                    rs.getString("metro"),
+                    rs.getString("mlsid")
+            ));
+        }
+
+        String queryCompsClosedTrino = compsSearchQueryBuilder(resultCompsListingsSearchClosed, brokerPriceOpinionPDFInfoDTO);
+
+        List<Map<String, Object>> resultCompsClosed = trinoJdbcTemplate.query(queryCompsClosedTrino, rs -> {
             List<Map<String, Object>> rows = new ArrayList<>();
             ResultSetMetaData metaData = rs.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -541,75 +604,6 @@ public class BrokerPriceOpinionPDFInfoService {
 
             return rows;
         });
-
-        if (resultCompsClosed.size() < 3) {
-
-            String queryCompsClosedPass2 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "sold", 2);
-
-            resultCompsClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass2, rs -> {
-                List<Map<String, Object>> rows = new ArrayList<>();
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-
-                while (rs.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(i);
-                        row.put(columnName, value);
-                    }
-                    rows.add(row);
-                }
-
-                return rows;
-            });
-        }
-
-        if (resultCompsClosed.size() < 3) {
-
-            String queryCompsClosedPass3 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "sold", 3);
-
-            resultCompsClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass3, rs -> {
-                List<Map<String, Object>> rows = new ArrayList<>();
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-
-                while (rs.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(i);
-                        row.put(columnName, value);
-                    }
-                    rows.add(row);
-                }
-
-                return rows;
-            });
-        }
-
-        if (resultCompsClosed.size() < 3) {
-
-            String queryCompsClosedPass4 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "sold", 4);
-
-            resultCompsClosed = prodBackupJdbcTemplate.query(queryCompsClosedPass4, rs -> {
-                List<Map<String, Object>> rows = new ArrayList<>();
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-
-                while (rs.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(i);
-                        row.put(columnName, value);
-                    }
-                    rows.add(row);
-                }
-
-                return rows;
-            });
-        }
 
         List<ComparablePropertyInformation> closedComparablePropertyInformationList = new ArrayList<>();
 
@@ -771,14 +765,14 @@ public class BrokerPriceOpinionPDFInfoService {
             comp.setLocation(findLocationDensity(String.valueOf(compClosed.get("longitude")), String.valueOf(compClosed.get("latitude"))));
 
             Double siteORLotSizeCPClosedDTAPISource = propertyDetailReportDataCP.SiteInformation.Acres;
-            BigDecimal siteORLotSizeCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (BigDecimal) compClosed.get("lot_size")
+            Double siteORLotSizeCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                    ? (Double) compClosed.get("lot_size")
                     : null;
 
             if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
                 comp.setSiteORLotSize(siteORLotSizeCPClosedDTAPISource);
-            } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource.doubleValue() != 0.0) {
-                comp.setSiteORLotSize(siteORLotSizeCPClosedPlatlabSource.doubleValue());
+            } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
+                comp.setSiteORLotSize(siteORLotSizeCPClosedPlatlabSource);
             } else {
                 comp.setSiteORLotSize(null);
             }
@@ -931,11 +925,48 @@ public class BrokerPriceOpinionPDFInfoService {
 
         brokerPriceOpinionPDFInfoDTO.setClosedComparablePropertyInformationList(closedComparablePropertyInformationList);
 
-        List<Map<String, Object>> resultCompsActive;
+        List<ListingDTO> resultCompsListingsSearchActive;
 
-        String queryCompsActivePass1 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "active", 1);
+        String queryCompsActivePass1 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Active", 1);
 
-        resultCompsActive = prodBackupJdbcTemplate.query(queryCompsActivePass1, rs -> {
+        resultCompsListingsSearchActive = prodBackupJdbcTemplate.query(queryCompsActivePass1, (rs, rowNum) -> new ListingDTO(
+                rs.getString("metro"),
+                rs.getString("mlsid")
+        ));
+
+        if (resultCompsListingsSearchActive.size() < 3) {
+
+            String queryCompsActivePass2 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Active", 2);
+
+            resultCompsListingsSearchActive = prodBackupJdbcTemplate.query(queryCompsActivePass2, (rs, rowNum) -> new ListingDTO(
+                    rs.getString("metro"),
+                    rs.getString("mlsid")
+            ));
+        }
+
+        if (resultCompsListingsSearchActive.size() < 3) {
+
+            String queryCompsActivePass3 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Active", 3);
+
+            resultCompsListingsSearchActive = prodBackupJdbcTemplate.query(queryCompsActivePass3, (rs, rowNum) -> new ListingDTO(
+                    rs.getString("metro"),
+                    rs.getString("mlsid")
+            ));
+        }
+
+        if (resultCompsListingsSearchActive.size() < 3) {
+
+            String queryCompsActivePass4 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Active", 4);
+
+            resultCompsListingsSearchActive = prodBackupJdbcTemplate.query(queryCompsActivePass4, (rs, rowNum) -> new ListingDTO(
+                    rs.getString("metro"),
+                    rs.getString("mlsid")
+            ));
+        }
+
+        String queryCompsActiveTrino = compsSearchQueryBuilder(resultCompsListingsSearchActive, brokerPriceOpinionPDFInfoDTO);
+
+        List<Map<String, Object>> resultCompsActive = trinoJdbcTemplate.query(queryCompsActiveTrino, rs -> {
             List<Map<String, Object>> rows = new ArrayList<>();
             ResultSetMetaData metaData = rs.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -952,75 +983,6 @@ public class BrokerPriceOpinionPDFInfoService {
 
             return rows;
         });
-
-        if (resultCompsActive.size() < 3) {
-
-            String queryCompsActivePass2 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "active", 2);
-
-            resultCompsActive = prodBackupJdbcTemplate.query(queryCompsActivePass2, rs -> {
-                List<Map<String, Object>> rows = new ArrayList<>();
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-
-                while (rs.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(i);
-                        row.put(columnName, value);
-                    }
-                    rows.add(row);
-                }
-
-                return rows;
-            });
-        }
-
-        if (resultCompsActive.size() < 3) {
-
-            String queryCompsActivePass3 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "active", 3);
-
-            resultCompsActive = prodBackupJdbcTemplate.query(queryCompsActivePass3, rs -> {
-                List<Map<String, Object>> rows = new ArrayList<>();
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-
-                while (rs.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(i);
-                        row.put(columnName, value);
-                    }
-                    rows.add(row);
-                }
-
-                return rows;
-            });
-        }
-
-        if (resultCompsActive.size() < 3) {
-
-            String queryCompsActivePass4 = compsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "active", 4);
-
-            resultCompsActive = prodBackupJdbcTemplate.query(queryCompsActivePass4, rs -> {
-                List<Map<String, Object>> rows = new ArrayList<>();
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-
-                while (rs.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(i);
-                        row.put(columnName, value);
-                    }
-                    rows.add(row);
-                }
-
-                return rows;
-            });
-        }
 
         List<ComparablePropertyInformation> activeComparablePropertyInformationList = new ArrayList<>();
 
@@ -1182,14 +1144,14 @@ public class BrokerPriceOpinionPDFInfoService {
             comp.setLocation(findLocationDensity(String.valueOf(compActive.get("longitude")), String.valueOf(compActive.get("latitude"))));
 
             Double siteORLotSizeCPClosedDTAPISource = propertyDetailReportDataCP.SiteInformation.Acres;
-            BigDecimal siteORLotSizeCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (BigDecimal) compActive.get("lot_size")
+            Double siteORLotSizeCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                    ? (Double) compActive.get("lot_size")
                     : null;
 
             if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
                 comp.setSiteORLotSize(siteORLotSizeCPClosedDTAPISource);
-            } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource.doubleValue() != 0.0) {
-                comp.setSiteORLotSize(siteORLotSizeCPClosedPlatlabSource.doubleValue());
+            } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
+                comp.setSiteORLotSize(siteORLotSizeCPClosedPlatlabSource);
             } else {
                 comp.setSiteORLotSize(null);
             }
@@ -1471,9 +1433,9 @@ public class BrokerPriceOpinionPDFInfoService {
         }
     }
 
-    public String compsSearchQueryBuilder(String propertyID,
-                                          BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO,
-                                          String status, Integer level) {
+    public String compsListingsSearchQueryBuilder(String propertyID,
+                                                  BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO,
+                                                  String status, Integer level) {
 
         int bedroomsAdjustedValue = 0;
         int bathroomsAdjustedValue = 0;
@@ -1483,6 +1445,7 @@ public class BrokerPriceOpinionPDFInfoService {
         double lotSizeAdjustedValueHigh = 0.0;
         int garageSpacesAdjustedValue = 0;
         int yearBuiltAdjustedValue = 0;
+        int dateAdjustedValue = 0;
         double distance = 0;
 
         if (level == 1) {
@@ -1494,6 +1457,7 @@ public class BrokerPriceOpinionPDFInfoService {
             lotSizeAdjustedValueHigh = 1.1;
             garageSpacesAdjustedValue = 0;
             yearBuiltAdjustedValue = 10;
+            dateAdjustedValue = 60;
             distance = 0.5;
         }
 
@@ -1506,6 +1470,7 @@ public class BrokerPriceOpinionPDFInfoService {
             lotSizeAdjustedValueHigh = 1.2;
             garageSpacesAdjustedValue = 1;
             yearBuiltAdjustedValue = 20;
+            dateAdjustedValue = 90;
             distance = 1.5;
         }
 
@@ -1518,6 +1483,7 @@ public class BrokerPriceOpinionPDFInfoService {
             lotSizeAdjustedValueHigh = 1.3;
             garageSpacesAdjustedValue = 2;
             yearBuiltAdjustedValue = 20;
+            dateAdjustedValue = 180;
             distance = 5;
         }
 
@@ -1530,59 +1496,21 @@ public class BrokerPriceOpinionPDFInfoService {
             lotSizeAdjustedValueHigh = 1.3;
             garageSpacesAdjustedValue = 2;
             yearBuiltAdjustedValue = 30;
+            dateAdjustedValue = 360;
             distance = 20;
         }
 
         StringBuilder query = new StringBuilder();
 
-        query.append("select ")
-                .append("plfhf.address, ")
-                .append("plfhf.city, ")
-                .append("plfhf.state, ")
-                .append("plfhf.zip, ")
-                .append("plfhf.county, ")
-                .append("ROUND((ST_Distance(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geography, ST_MakePoint(").append(brokerPriceOpinionPDFInfoDTO.getLongitude()).append(", ").append(brokerPriceOpinionPDFInfoDTO.getLatitude()).append(")::geography) / 1609.34)::numeric, 2)::float as proximity, ")
-                .append("plfhf.sold_price::int as sold_price, ")
-                .append("plfhf.original_listing_price::int as original_listing_price, ")
-                .append("plfhf.price::int as price, ")
-                .append("left(plfhf.sold_date, 10)::varchar as sold_date, ")
-                .append("left(plfhf.mls_list_date, 10)::varchar as mls_list_date, ")
-                .append("(COALESCE(CAST(left(plfhf.sold_date, 10) AS date), CURRENT_DATE) - CAST(left(plfhf.mls_list_date, 10) AS date)) as days_on_market, ")
-                .append("plfhf.display_mls_number, ")
-                .append("plfhf.longitude, ")
-                .append("plfhf.latitude, ")
-                .append("case")
-                .append("    when plfhf.lot_size_display is not null and plfhf.lot_size_display::numeric != 0 and plfhf.lot_size_units = 'Acres'")
-                .append("        then round(plfhf.lot_size_area::numeric, 2)")
-                .append("    when plfhf.lot_size_display is not null and plfhf.lot_size_display::numeric != 0 and plfhf.lot_size_units = 'Square Feet'")
-                .append("        then round(plfhf.lot_size_area::numeric / 43560, 2)")
-                .append("    when plfhf.lot_size is not null and plfhf.lot_size::numeric != 0 and plfhf.lot_size_units = 'Acres'")
-                .append("        then round(plfhf.lot_size_area::numeric, 2)")
-                .append("    when plfhf.lot_size is not null and plfhf.lot_size::numeric != 0 and plfhf.lot_size_units = 'Square Feet'")
-                .append("        then round(plfhf.lot_size_area::numeric / 43560, 2)")
-                .append("    when plfhf.lot_size_square_feet is not null and plfhf.lot_size_square_feet::numeric != 0")
-                .append("        then round(plfhf.lot_size_square_feet::numeric / 43560, 2)")
-                .append("    when plfhf.lot_size_area is not null and plfhf.lot_size_area::numeric != 0 and plfhf.lot_size_units = 'Acres'")
-                .append("        then round(plfhf.lot_size_area::numeric, 2)")
-                .append("    when plfhf.lot_size_area is not null and plfhf.lot_size_area::numeric != 0 and plfhf.lot_size_units = 'Square Feet'")
-                .append("        then round(plfhf.lot_size_area::numeric / 43560, 2)")
-                .append("    else null ")
-                .append("end as lot_size, ")
-                .append("plfhf.year_built::int, ")
-                .append("replace(plfhf.style, ',', ', ') as style, ")
-                .append("plfhf.bedrooms::int, ")
-                .append("plfhf.bathrooms_full::int, ")
-                .append("plfhf.bathrooms_half::int, ")
-                .append("plfhf.square_feet::int, ")
-                .append("plfhf.has_basement::bool, ")
-                .append("plfhf.garage_spaces::int ")
-                .append("from platlab_listings_full_history_filtered plfhf ")
-                .append("where ST_Within(ST_SetSRID(ST_MakePoint(plfhf.longitude::numeric, plfhf.latitude::numeric), 4326)::geometry, ST_Buffer(ST_MakePoint(").append(brokerPriceOpinionPDFInfoDTO.getLongitude()).append(", ").append(brokerPriceOpinionPDFInfoDTO.getLatitude()).append(")::geography, 1609.34 * ").append(distance).append(")::geometry) ")
-                .append("and plfhf.status = '").append(status).append("' ");
+        query.append("select ").append("plfc.metro, ").append("plfc.mlsid ")
+                .append("from platlab_listings_full_current plfc ")
+                .append("where ST_Within(plfc.geometry, ST_Buffer(ST_MakePoint(").append(brokerPriceOpinionPDFInfoDTO.getLongitude()).append(", ").append(brokerPriceOpinionPDFInfoDTO.getLatitude()).append(")::geography, 1609.34 * ").append(distance).append(")::geometry) ")
+                .append("and plfc.status = '").append(status).append("' ")
+                .append("AND CURRENT_DATE - COALESCE(plfc.closedate::date, plfc.contractdate::date) <= ").append(dateAdjustedValue);
 
         if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBedrooms() != null) {
             int bedrooms = brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBedrooms();
-            query.append("and plfhf.bedrooms::integer between ")
+            query.append("and plfc.bed between ")
                     .append(bedrooms - bedroomsAdjustedValue)
                     .append(" and ")
                     .append(bedrooms + bedroomsAdjustedValue)
@@ -1591,7 +1519,7 @@ public class BrokerPriceOpinionPDFInfoService {
 
         if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBathrooms() != null) {
             double bathrooms = brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBathrooms();
-            query.append("and plfhf.bathrooms::integer between ")
+            query.append("and plfc.bath between ")
                     .append(bathrooms - bathroomsAdjustedValue)
                     .append(" and ")
                     .append(bathrooms + bathroomsAdjustedValue)
@@ -1600,7 +1528,7 @@ public class BrokerPriceOpinionPDFInfoService {
 
         if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getSqftGLA() != null) {
             int sqft = brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getSqftGLA();
-            query.append("and plfhf.square_feet::numeric between ")
+            query.append("and plfc.size between ")
                     .append(sqft * squareFeetAdjustedValueLow)
                     .append(" and ")
                     .append(sqft * squareFeetAdjustedValueHigh)
@@ -1609,16 +1537,16 @@ public class BrokerPriceOpinionPDFInfoService {
 
         if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize() != null) {
             double lotSize = brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize();
-            query.append("and plfhf.lot_size::numeric between ")
+            query.append("and plfc.lot_size between ")
                     .append(lotSize * lotSizeAdjustedValueLow)
-                    .append(" and ")
+                    .append(" * 43560 and ")
                     .append(lotSize * lotSizeAdjustedValueHigh)
-                    .append(" ");
+                    .append(" * 43560 ");
         }
 
         if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces() != null) {
             int garageSpaces = brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces();
-            query.append("and plfhf.garage_spaces::integer between ")
+            query.append("and plfc.garage::integer between ")
                     .append(garageSpaces - garageSpacesAdjustedValue)
                     .append(" and ")
                     .append(garageSpaces + garageSpacesAdjustedValue)
@@ -1627,16 +1555,75 @@ public class BrokerPriceOpinionPDFInfoService {
 
         if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt() != null) {
             int yearBuilt = brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt();
-            query.append("and plfhf.year_built::integer between ")
+            query.append("and plfc.yearbuilt between ")
                     .append(yearBuilt - yearBuiltAdjustedValue)
                     .append(" and ")
                     .append(yearBuilt + yearBuiltAdjustedValue)
                     .append(" ");
         }
 
-        query.append("and plfhf.ref_id != '" + propertyID + "' ")
-                .append("and plfhf.mls_property_type = 'Single Family Home' ")
-                .append("order by proximity asc");
+        query.append("and plfc.ref_id != '" + propertyID + "' and plfc.propertytype = 'Residential'");
+
+        return query.toString();
+    }
+
+    public String compsSearchQueryBuilder(List<ListingDTO> listingDTOList, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+
+        StringBuilder query = new StringBuilder();
+
+        query.append("SELECT ")
+                .append("lc.address, ")
+                .append("lc.city, ")
+                .append("lc.state, ")
+                .append("lc.zip, ")
+                .append("lc.county, ")
+                .append("ROUND(7917.511382 * ASIN(SQRT(POWER(SIN(RADIANS((CAST(lc.latitude AS DOUBLE) - ").append(brokerPriceOpinionPDFInfoDTO.getLatitude()).append(") / 2)), 2) + COS(RADIANS(").append(brokerPriceOpinionPDFInfoDTO.getLatitude()).append(")) * COS(RADIANS(CAST(lc.latitude AS DOUBLE))) * POWER(SIN(RADIANS((CAST(lc.longitude AS DOUBLE) - ").append(brokerPriceOpinionPDFInfoDTO.getLongitude()).append(") / 2)), 2))), 2) AS proximity, ")
+                .append("CAST(lc.sold_price AS INTEGER) AS sold_price, ")
+                .append("CAST(lc.original_listing_price AS INTEGER) AS original_listing_price, ")
+                .append("CAST(lc.price AS INTEGER) AS price, ")
+                .append("SUBSTRING(lc.sold_date, 1, 10) AS sold_date, ")
+                .append("SUBSTRING(lc.mls_list_date, 1, 10) AS mls_list_date, ")
+                .append("CAST(DATE_DIFF('day', TRY_CAST(SUBSTRING(lc.mls_list_date, 1, 10) AS DATE), COALESCE(TRY_CAST(SUBSTRING(lc.sold_date, 1, 10) AS DATE), CURRENT_DATE)) AS INTEGER) AS days_on_market, ")
+                .append("lc.display_mls_number, ")
+                .append("lc.longitude, ")
+                .append("lc.latitude, ")
+                .append("CASE")
+                .append("    WHEN lc.lot_size_display IS NOT NULL AND TRY_CAST(lc.lot_size_display AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres'")
+                .append("        THEN ROUND(CAST(lc.lot_size_area AS DOUBLE), 2)")
+                .append("    WHEN lc.lot_size_display IS NOT NULL AND TRY_CAST(lc.lot_size_display AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet'")
+                .append("        THEN ROUND(CAST(lc.lot_size_area AS DOUBLE) / 43560, 2)")
+                .append("    WHEN lc.lot_size IS NOT NULL AND TRY_CAST(lc.lot_size AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres'")
+                .append("        THEN ROUND(CAST(lc.lot_size_area AS DOUBLE), 2)")
+                .append("    WHEN lc.lot_size IS NOT NULL AND TRY_CAST(lc.lot_size AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet'")
+                .append("        THEN ROUND(CAST(lc.lot_size_area AS DOUBLE) / 43560, 2)")
+                .append("    WHEN lc.lot_size_square_feet IS NOT NULL AND TRY_CAST(lc.lot_size_square_feet AS DOUBLE) != 0")
+                .append("        THEN ROUND(CAST(lc.lot_size_square_feet AS DOUBLE) / 43560, 2)")
+                .append("    WHEN lc.lot_size_area IS NOT NULL AND TRY_CAST(lc.lot_size_area AS DOUBLE) != 0 AND lc.lot_size_units = 'Acres'")
+                .append("        THEN ROUND(CAST(lc.lot_size_area AS DOUBLE), 2)")
+                .append("    WHEN lc.lot_size_area IS NOT NULL AND TRY_CAST(lc.lot_size_area AS DOUBLE) != 0 AND lc.lot_size_units = 'Square Feet'")
+                .append("        THEN ROUND(CAST(lc.lot_size_area AS DOUBLE) / 43560, 2)")
+                .append("    ELSE NULL ")
+                .append("END AS lot_size, ")
+                .append("CAST(lc.year_built AS INTEGER) AS year_built, ")
+                .append("REPLACE(lc.style, ',', ', ') AS style, ")
+                .append("CAST(lc.bedrooms AS INTEGER) AS bedrooms, ")
+                .append("CAST(lc.bathrooms_full AS INTEGER) AS bathrooms_full, ")
+                .append("CAST(lc.bathrooms_half AS INTEGER) AS bathrooms_half, ")
+                .append("CAST(lc.square_feet AS INTEGER) AS square_feet, ")
+                .append("CAST(lc.has_basement AS BOOLEAN) AS has_basement, ")
+                .append("CAST(lc.garage_spaces AS INTEGER) AS garage_spaces ")
+                .append("FROM iceberg.platlab.listing_current lc ");
+
+        if (listingDTOList != null && !listingDTOList.isEmpty()) {
+            query.append("WHERE ");
+            for (int i = 0; i < listingDTOList.size(); i++) {
+                ListingDTO dto = listingDTOList.get(i);
+                query.append("(lc.mls_id = '").append(dto.getMetro()).append("' AND lc.display_mls_number = '").append(dto.getMlsid()).append("')");
+                if (i < listingDTOList.size() - 1) {
+                    query.append(" OR ");
+                }
+            }
+        }
 
         return query.toString();
     }
