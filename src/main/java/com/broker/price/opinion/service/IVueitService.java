@@ -178,12 +178,12 @@ public class IVueitService {
 
         String query = "SELECT images FROM bpo_ivueit_service_usage WHERE vue_id = ?";
 
-        String imagesCsv = prodBackupJdbcTemplate.queryForObject(query, new Object[]{vueId}, String.class);
+        String images = prodBackupJdbcTemplate.queryForObject(query, new Object[]{vueId}, String.class);
 
-        if (imagesCsv == null || imagesCsv.trim().isEmpty()) {
+        if (images == null || images.trim().isEmpty()) {
             return Collections.emptyList();
         }
 
-        return Arrays.asList(imagesCsv.split("\\s*,\\s*"));
+        return Arrays.asList(images.split("\\s*,\\s*"));
     }
 }
