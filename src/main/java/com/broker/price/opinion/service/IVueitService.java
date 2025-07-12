@@ -8,9 +8,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +29,9 @@ public class IVueitService {
 
     @Value("${ivueit.api.secret}")
     private String iVueitAPISecret;
+
+    @Value("${ivueit.api.survey.id}")
+    private String iVueitAPISurveyId;
 
     private final JdbcTemplate prodJdbcTemplate;
     private final JdbcTemplate prodBackupJdbcTemplate;
@@ -67,5 +76,102 @@ public class IVueitService {
         } catch (Exception e) {
             throw new RuntimeException("Authentication Exception: " + e.getMessage(), e);
         }
+    }
+
+    public String createIVueitImagesRequest(String propertyId, String address, String city, String state, String zipcode) {
+
+        int iVueitRequestId = createBPOiVueitServiceUsageRow(propertyId, address, city, state, zipcode);
+
+        String url = "https://api.staging.ivueit.services/api/v1/batch/import";
+
+        long publishAt = getPublishAtNanos();
+        long expiresAt = publishAt + Duration.ofDays(7).toMillis() * 1_000_000;
+
+        String requestBody = "{"
+                + "\"surveyTemplate\": \"" + iVueitAPISurveyId + "\","
+                + "\"score\": 80,"
+                + "\"startsAt\": \"08:00\","
+                + "\"endsAt\": \"23:59\","
+                + "\"publishAt\": " + publishAt + ","
+                + "\"expiresAt\": {"
+                + "  \"value\": " + expiresAt + ""
+                + "},"
+                + "\"isInternal\": false,"
+                + "\"repeat\": true,"
+                + "\"urgent\": true,"
+                + "\"selectedDays\": \"{\\\"selectedDays\\\":[0,1,2,3,4,5,6]}\","
+                + "\"backgroundCheckRequired\": false,"
+                + "\"highQualityRequired\": true,"
+                + "\"includePhotoTimestamp\": true,"
+                + "\"vueData\": {"
+                + "  \"vueName\": \"test-vue-" + iVueitRequestId + "-sl\","
+                + "  \"vueNotes\": \"test-note-" + iVueitRequestId + "-sl\","
+                + "  \"vueAddress\": \"" + address + "\","
+                + "  \"vueCity\": \"" + city + "\","
+                + "  \"vueStateOrProvinceTwoCharacterCode\": \"" + state + "\","
+                + "  \"vueZipOrPostalCode\": \"" + zipcode + "\","
+                + "  \"attachmentFileIds\": [],"
+                + "  \"vueCustomMetadata\": {"
+                + "    \"test\": \"test-sl-" + iVueitRequestId + "\""
+                + "  }"
+                + "}"
+                + "}";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x_ivueit_auth_token", getAccessTokenIVueitAPI());
+
+        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode root = objectMapper.readTree(response.getBody());
+                updateBPOiVueitRequestRowVueId(iVueitRequestId, root.path("vueId").asText());
+                return root.path("vueId").asText();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse batch import response", e);
+            }
+        } else {
+            throw new RuntimeException("batch import call failed: " + response.getStatusCode());
+        }
+    }
+
+    public int createBPOiVueitServiceUsageRow(String propertyId, String address, String city, String state, String zipcode) {
+
+        String sql = "INSERT INTO bpo_ivueit_service_usage (property_id, address, city, state, zipcode) " +
+                "VALUES (?, ?, ?, ?, ?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        prodJdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, propertyId);
+            ps.setString(2, address);
+            ps.setString(3, city);
+            ps.setString(4, state);
+            ps.setString(5, zipcode);
+            return ps;
+        }, keyHolder);
+
+        Map<String, Object> keys = keyHolder.getKeys();
+        if (keys != null && keys.containsKey("id")) {
+            return ((Number) keys.get("id")).intValue();
+        } else {
+            throw new RuntimeException("Failed to retrieve generated id from insert");
+        }
+    }
+
+    public void updateBPOiVueitRequestRowVueId(int id, String vueId) {
+        String sql = "UPDATE bpo_ivueit_service_usage SET vue_id = ? WHERE id = ?";
+        prodJdbcTemplate.update(sql, vueId, id);
+    }
+
+    public long getPublishAtNanos() {
+        return Instant.now().toEpochMilli() * 1_000_000;
     }
 }
