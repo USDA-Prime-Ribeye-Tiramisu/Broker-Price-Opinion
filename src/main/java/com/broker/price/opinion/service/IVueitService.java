@@ -17,8 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -173,5 +172,18 @@ public class IVueitService {
 
     public long getPublishAtNanos() {
         return Instant.now().toEpochMilli() * 1_000_000;
+    }
+
+    public List<String> getIVueitImages(String vueId) {
+
+        String query = "SELECT images FROM bpo_ivueit_service_usage WHERE vue_id = ?";
+
+        String imagesCsv = prodBackupJdbcTemplate.queryForObject(query, new Object[]{vueId}, String.class);
+
+        if (imagesCsv == null || imagesCsv.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(imagesCsv.split("\\s*,\\s*"));
     }
 }
