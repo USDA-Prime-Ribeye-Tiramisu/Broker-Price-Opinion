@@ -186,4 +186,89 @@ public class IVueitService {
 
         return Arrays.asList(images.split("\\s*,\\s*"));
     }
+
+    public void getSubmissionIdFromIVueitByVueId(String vueId) {
+
+        String url = "https://api.staging.ivueit.services/api/v1/vue/" + vueId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x_ivueit_auth_token", getAccessTokenIVueitAPI());
+
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode submissionIdNode = mapper.readTree(response.getBody()).get("submissionId");
+                if (submissionIdNode != null && !submissionIdNode.isNull()) {
+                    updateBPOiVueitRequestRowSubmissionId(submissionIdNode.asText(), vueId);
+                } else {
+                    throw new RuntimeException("submissionId not found in response");
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse JSON response: " + e.getMessage(), e);
+            }
+        } else {
+            throw new RuntimeException("Failed to get Vue info: " + response.getStatusCode());
+        }
+    }
+
+    public void updateBPOiVueitRequestRowSubmissionId(String submissionId, String vueId) {
+        String sql = "UPDATE bpo_ivueit_service_usage SET submission_id = ? WHERE vue_id = ?";
+        prodJdbcTemplate.update(sql, submissionId, vueId);
+    }
+
+    public void fetchImagesFromIVueitBySubmissionId(String submissionId) {
+
+        String url = "https://api.staging.ivueit.services/api/v1/surveysubmission/" + submissionId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x_ivueit_auth_token", getAccessTokenIVueitAPI());
+
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(response.getBody());
+                List<String> urls = new ArrayList<>();
+                JsonNode steps = root.get("steps");
+                if (steps != null && steps.isArray()) {
+                    for (JsonNode step : steps) {
+                        String stepType = step.path("stepType").asText();
+                        if ("PHOTO".equalsIgnoreCase(stepType)) {
+                            JsonNode photos = step.get("photos");
+                            if (photos != null && photos.isArray()) {
+                                for (JsonNode photo : photos) {
+                                    String urlVal = photo.path("url").asText(null);
+                                    if (urlVal != null) {
+                                        urls.add(urlVal);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                updateImagesForSubmissionId(submissionId, urls);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse JSON response: " + e.getMessage(), e);
+            }
+        } else {
+            throw new RuntimeException("Failed to fetch submission: " + response.getStatusCode());
+        }
+    }
+
+    public void updateImagesForSubmissionId(String submissionId, List<String> imageUrls) {
+        String joinedURLs = String.join(",", imageUrls);
+        String sql = "UPDATE bpo_ivueit_service_usage SET images = ? WHERE submission_id = ?";
+        prodJdbcTemplate.update(sql, joinedURLs, submissionId);
+    }
 }
