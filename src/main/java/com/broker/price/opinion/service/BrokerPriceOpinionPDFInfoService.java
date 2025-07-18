@@ -69,7 +69,7 @@ public class BrokerPriceOpinionPDFInfoService {
         String queryTargetPropertyByPropertyId = "select " +
                 "plfc.metro, plfc.mlsid " +
                 "from platlab_listings_full_current plfc " +
-                "where plfc.ref_id = '100000377' " +
+                "where plfc.ref_id = '" + propertyID + "' " +
                 "order by plfc.modificationtimestamp desc " +
                 "limit 1";
 
