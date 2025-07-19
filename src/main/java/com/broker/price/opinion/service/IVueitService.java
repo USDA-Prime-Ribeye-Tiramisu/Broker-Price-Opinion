@@ -142,7 +142,7 @@ public class IVueitService {
 
     public int createBPOiVueitServiceUsageRow(String propertyId, String address, String city, String state, String zipcode) {
 
-        String sql = "INSERT INTO bpo_ivueit_service_usage (property_id, address, city, state, zipcode) " +
+        String sql = "INSERT INTO firstamerican.bpo_ivueit_service_usage (property_id, address, city, state, zipcode) " +
                 "VALUES (?, ?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -166,7 +166,7 @@ public class IVueitService {
     }
 
     public void updateBPOiVueitRequestRowVueId(int id, String vueId) {
-        String sql = "UPDATE bpo_ivueit_service_usage SET vue_id = ? WHERE id = ?";
+        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET vue_id = ? WHERE id = ?";
         prodJdbcTemplate.update(sql, vueId, id);
     }
 
@@ -176,7 +176,7 @@ public class IVueitService {
 
     public List<String> getIVueitImages(String vueId) {
 
-        String query = "SELECT images FROM bpo_ivueit_service_usage WHERE vue_id = ?";
+        String query = "SELECT images FROM firstamerican.bpo_ivueit_service_usage WHERE vue_id = ?";
 
         String images = prodBackupJdbcTemplate.queryForObject(query, new Object[]{vueId}, String.class);
 
@@ -218,7 +218,7 @@ public class IVueitService {
     }
 
     public void updateBPOiVueitRequestRowSubmissionId(String submissionId, String vueId) {
-        String sql = "UPDATE bpo_ivueit_service_usage SET submission_id = ? WHERE vue_id = ?";
+        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET submission_id = ? WHERE vue_id = ?";
         prodJdbcTemplate.update(sql, submissionId, vueId);
     }
 
@@ -268,7 +268,7 @@ public class IVueitService {
 
     public void updateImagesForSubmissionId(String submissionId, List<String> imageUrls) {
         String joinedURLs = String.join(",", imageUrls);
-        String sql = "UPDATE bpo_ivueit_service_usage SET images = ? WHERE submission_id = ?";
+        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET images = ? WHERE submission_id = ?";
         prodJdbcTemplate.update(sql, joinedURLs, submissionId);
     }
 }
