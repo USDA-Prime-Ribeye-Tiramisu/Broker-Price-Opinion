@@ -10,6 +10,8 @@ import lombok.*;
 @ToString
 public class ComparablePropertyInformation {
 
+    private Integer compNumber;
+    private String status;
     private String address;
     private String city;
     private String state;
@@ -26,10 +28,10 @@ public class ComparablePropertyInformation {
     private String mlsID;
     private String financing;
     private String salesConcession;
-    private String bankORREOSale;
+    private String bankOrREOSale;
     private String location;
-    private String siteORView;
-    private Double siteORLotSize;
+    private String siteOrView;
+    private Double siteOrLotSize;
     private Integer yearBuilt;
     private String construction;
     private String condition;
@@ -38,10 +40,11 @@ public class ComparablePropertyInformation {
     private Integer bedrooms;
     private Double bathrooms;
     private Integer grossLivingArea;
-    private String basement;
+    private String basementAndFinish;
     private String heating;
     private String cooling;
     private String garage;
     private String carport;
     private String additionalAmenities;
+    private Integer netAdjustments;
 }
