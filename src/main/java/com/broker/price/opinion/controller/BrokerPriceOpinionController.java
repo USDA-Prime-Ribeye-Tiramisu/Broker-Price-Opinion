@@ -1,6 +1,7 @@
 package com.broker.price.opinion.controller;
 
 import com.broker.price.opinion.dto.BrokerPriceOpinionPDFInfoDTO;
+import com.broker.price.opinion.dto.ComparablePropertyInformation;
 import com.broker.price.opinion.service.BrokerPriceOpinionPDFInfoService;
 import com.broker.price.opinion.service.FillBrokerPriceOpinionPDFService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,5 +54,21 @@ public class BrokerPriceOpinionController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @CrossOrigin
+    @PostMapping("/update-bpo-information-by-id")
+    public void updateBPOInformationById(@RequestParam("id") Integer id,
+                                         @RequestBody() BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+        brokerPriceOpinionPDFInfoService.updateBPOInformation(id, brokerPriceOpinionPDFInfoDTO);
+    }
+
+    @CrossOrigin
+    @PostMapping("/update-bpo-information-comp-by-id")
+    public void updateBPOInformationCompById(@RequestParam("id") Integer id,
+                                             @RequestParam("comp_number") Integer comp_number,
+                                             @RequestParam("status") String status,
+                                             @RequestBody() ComparablePropertyInformation comparablePropertyInformation) {
+        brokerPriceOpinionPDFInfoService.updateBPOInformationComp(id, comp_number, status, comparablePropertyInformation);
     }
 }
