@@ -41,7 +41,7 @@ public class PropertyInformation {
     private Double priorSalePrice;
     private Double currentTax;
     private Double delinquentTax;
-    private String condoORPUD;
+    private String condoOrPUD;
     private Double feeHOA;
     private String zoning;
     private Double lotSize;

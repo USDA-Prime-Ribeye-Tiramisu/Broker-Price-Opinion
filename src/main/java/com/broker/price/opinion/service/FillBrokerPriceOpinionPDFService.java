@@ -877,10 +877,10 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.beginText();
 
                     contentStream.newLineAtOffset(168 + 67 * i, 326);
-                    if (comp.getSiteORLotSize() == null) {
+                    if (comp.getSiteOrLotSize() == null) {
                         contentStream.showText("");
                     } else {
-                        contentStream.showText(String.valueOf(comp.getSiteORLotSize()));
+                        contentStream.showText(String.valueOf(comp.getSiteOrLotSize()));
                     }
 
                     contentStream.endText();
@@ -987,10 +987,10 @@ public class FillBrokerPriceOpinionPDFService {
 
                     // Basement & Finish
                     contentStream.newLineAtOffset(168 + 67 * i, 254);
-                    if (comp.getBasement() == null) {
+                    if (comp.getBasementAndFinish() == null) {
                         contentStream.showText("");
                     } else {
-                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
+                        contentStream.showText(comp.getBasementAndFinish() + " / " + "Unk.");
                     }
 
                     contentStream.endText();
@@ -1256,10 +1256,10 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.beginText();
 
                     contentStream.newLineAtOffset(370 + 67 * i, 326);
-                    if (comp.getSiteORLotSize() == null) {
+                    if (comp.getSiteOrLotSize() == null) {
                         contentStream.showText("");
                     } else {
-                        contentStream.showText(String.valueOf(comp.getSiteORLotSize()));
+                        contentStream.showText(String.valueOf(comp.getSiteOrLotSize()));
                     }
 
                     contentStream.endText();
@@ -1366,10 +1366,10 @@ public class FillBrokerPriceOpinionPDFService {
 
                     // Basement & Finish
                     contentStream.newLineAtOffset(370 + 67 * i, 254);
-                    if (comp.getBasement() == null) {
+                    if (comp.getBasementAndFinish() == null) {
                         contentStream.showText("");
                     } else {
-                        contentStream.showText(comp.getBasement() + " / " + "Unk.");
+                        contentStream.showText(comp.getBasementAndFinish() + " / " + "Unk.");
                     }
 
                     contentStream.endText();

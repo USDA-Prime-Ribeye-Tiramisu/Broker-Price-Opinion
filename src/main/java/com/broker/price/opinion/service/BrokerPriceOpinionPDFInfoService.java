@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,8 +22,10 @@ import java.math.RoundingMode;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.ResultSetMetaData;
+import java.sql.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,14 +38,717 @@ public class BrokerPriceOpinionPDFInfoService {
     private String DTAPIClientSecretKey;
 
     private final JdbcTemplate trinoJdbcTemplate;
+    private final JdbcTemplate prodJdbcTemplate;
     private final JdbcTemplate prodBackupJdbcTemplate;
 
     @Autowired
     public BrokerPriceOpinionPDFInfoService(
             @Qualifier("trinoJdbcTemplate") JdbcTemplate trinoJdbcTemplate,
+            @Qualifier("prodJdbcTemplate") JdbcTemplate prodJdbcTemplate,
             @Qualifier("prodBackupJdbcTemplate") JdbcTemplate prodBackupJdbcTemplate) {
         this.trinoJdbcTemplate = trinoJdbcTemplate;
+        this.prodJdbcTemplate = prodJdbcTemplate;
         this.prodBackupJdbcTemplate = prodBackupJdbcTemplate;
+    }
+
+    public Integer generateBPOInformationRequest(String propertyID) {
+
+        String sql = "INSERT INTO firstamerican.broker_price_opinion_pdf_info " +
+                "(property_id, bpo_info_generation_status) VALUES (?, ?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        prodJdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, propertyID);
+            ps.setString(2, "In progress");
+            return ps;
+        }, keyHolder);
+
+        Map<String, Object> keys = keyHolder.getKeys();
+        Integer id = (keys != null && keys.get("id") != null) ? ((Number) keys.get("id")).intValue() : null;
+
+        CompletableFuture.runAsync(() -> this.generateBPOInformation(id, propertyID));
+
+        return id;
+    }
+
+    public void generateBPOInformation(Integer id, String propertyID) {
+
+        BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = getBrokerPriceOpinionPDFInformation(propertyID);
+
+        String sql = "UPDATE firstamerican.broker_price_opinion_pdf_info SET " +
+
+                "full_address = ?, " +
+                "property_id = ?, " +
+                "status = ?, " +
+                "longitude = ?, " +
+                "latitude = ?, " +
+                "placekey = ?, " +
+
+                "o_i_loan_number = ?, " +
+                "o_i_client = ?, " +
+                "o_i_order_for = ?, " +
+                "o_i_order_number = ?, " +
+                "o_i_borrower_or_owner_name = ?, " +
+                "o_i_address = ?, " +
+                "o_i_city = ?, " +
+                "o_i_state = ?, " +
+                "o_i_zipcode = ?, " +
+                "o_i_county = ?, " +
+                "o_i_parcel_id = ?, " +
+                "o_i_fee_simple_or_leasehold = ?, " +
+
+                "p_i_number_of_units = ?, " +
+                "p_i_property_type = ?, " +
+                "p_i_property_style = ?, " +
+                "p_i_sqft_gla = ?, " +
+                "p_i_total_rooms = ?, " +
+                "p_i_bedrooms = ?, " +
+                "p_i_bathrooms = ?, " +
+                "p_i_garage_spaces = ?, " +
+                "p_i_garage = ?, " +
+                "p_i_year_built = ?, " +
+                "p_i_view = ?, " +
+                "p_i_pool = ?, " +
+                "p_i_spa = ?, " +
+                "p_i_feature_porch = ?, " +
+                "p_i_feature_patio = ?, " +
+                "p_i_feature_deck = ?, " +
+                "p_i_number_of_fireplaces = ?, " +
+                "p_i_overall_condition = ?, " +
+                "p_i_occupancy = ?, " +
+                "p_i_current_rent = ?, " +
+                "p_i_market_rent = ?, " +
+                "p_i_is_listed = ?, " +
+                "p_i_is_listed_in_past_12_months = ?, " +
+                "p_i_list_price = ?, " +
+                "p_i_name_of_listing_company = ?, " +
+                "p_i_listing_agent_phone = ?, " +
+                "p_i_is_transferred_in_past_12_months = ?, " +
+                "p_i_prior_sale_date = ?, " +
+                "p_i_prior_sale_price = ?, " +
+                "p_i_current_tax = ?, " +
+                "p_i_delinquent_tax = ?, " +
+                "p_i_condo_or_pud = ?, " +
+                "p_i_fee_hoa = ?, " +
+                "p_i_zoning = ?, " +
+                "p_i_lot_size = ?, " +
+                "p_i_land_value = ?, " +
+                "p_i_is_conforms_to_neighborhood = ?, " +
+
+                "c_i_condition_overall = ?, " +
+                "c_i_condition_comments = ?, " +
+
+                "n_i_market_conditions = ?, " +
+                "n_i_number_of_competitive_listings = ?, " +
+                "n_i_price_range_of_current_listing_and_sales_from = ?, " +
+                "n_i_price_range_of_current_listing_and_sales_to = ?, " +
+                "n_i_supply_and_demand = ?, " +
+                "n_i_positive_or_negative_influences = ?, " +
+                "n_i_location = ?, " +
+                "n_i_neighborhood_trend = ?, " +
+                "n_i_homes_in_neighborhood_are = ?, " +
+                "n_i_average_market_time = ?, " +
+                "n_i_most_probable_buyer = ?, " +
+
+                "bpo_info_generation_status = ? " +
+                "WHERE id = ?";
+
+        prodJdbcTemplate.update(sql,
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getFullAddress()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyID()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getStatus()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getLongitude()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getLatitude()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPlacekey()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderFor()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getBorrowerOrOwnerName()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCounty()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getParcelID()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getFeeSimpleORLeasehold()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNumberOfUnits()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPropertyType()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPropertyStyle()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getSqftGLA()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getTotalRooms()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBedrooms()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBathrooms()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarage()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getView()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPool()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getSpa()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeaturePorch()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeaturePatio()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeatureDeck()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNumberOfFireplaces()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getOverallCondition()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getOccupancy()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCurrentRent()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getMarketRent()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsListed()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsListedInPast12Months()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getListPrice()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNameOfListingCompany()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getListingAgentPhone()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsTransferredInPast12Months()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPriorSaleDate()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPriorSalePrice()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCurrentTax()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getDelinquentTax()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCondoOrPUD()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeeHOA()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getZoning()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLandValue()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsConformsToNeighborhood()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMarketConditions()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNumberOfCompetitiveListings()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesFrom()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesTo()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getSupplyAndDemand()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPositiveOrNegativeInfluences()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getLocation()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNeighborhoodTrend()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getHomesInNeighborhoodAre()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getAverageMarketTime()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMostProbableBuyer()).orElse(null),
+
+                "Completed",
+                id
+        );
+
+        generateBPOInformationComps(id, "Closed", brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList());
+        generateBPOInformationComps(id, "Active", brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList());
+    }
+
+    public void generateBPOInformationComps(Integer bpoId, String status, List<ComparablePropertyInformation> comps) {
+
+        String sql = "INSERT INTO firstamerican.broker_price_opinion_pdf_info_comps (" +
+                "bpo_id, comp_number, status, address, city, state, zipcode, county, proximity, sale_price, price_per_sqft, " +
+                "original_listing_price, current_listing_price, sale_date, list_date, days_on_market, mls_id, financing, " +
+                "sales_concession, bank_or_reo_sale, location, site_or_view, site_or_lot_size, year_built, construction, " +
+                "condition, style, total_rooms, bedrooms, bathrooms, gross_living_area, basement_and_finish, heating, cooling, " +
+                "garage, carport, additional_amenities, net_adjustments) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        for (int i = 0; i < comps.size(); i++) {
+
+            ComparablePropertyInformation comp = comps.get(i);
+            int compNumber = i + 1;
+
+            prodJdbcTemplate.update(sql,
+                    bpoId, compNumber, status,
+                    Optional.ofNullable(comp.getAddress()).orElse(null),
+                    Optional.ofNullable(comp.getCity()).orElse(null),
+                    Optional.ofNullable(comp.getState()).orElse(null),
+                    Optional.ofNullable(comp.getZipcode()).orElse(null),
+                    Optional.ofNullable(comp.getCounty()).orElse(null),
+                    comp.getProximity(),
+                    comp.getSalePrice(),
+                    comp.getPricePerSqFt(),
+                    comp.getOriginalListingPrice(),
+                    comp.getCurrentListingPrice(),
+                    Optional.ofNullable(comp.getSaleDate()).orElse(null),
+                    Optional.ofNullable(comp.getListDate()).orElse(null),
+                    comp.getDaysOnMarket(),
+                    Optional.ofNullable(comp.getMlsID()).orElse(null),
+                    Optional.ofNullable(comp.getFinancing()).orElse(null),
+                    Optional.ofNullable(comp.getSalesConcession()).orElse(null),
+                    Optional.ofNullable(comp.getBankOrREOSale()).orElse(null),
+                    Optional.ofNullable(comp.getLocation()).orElse(null),
+                    Optional.ofNullable(comp.getSiteOrView()).orElse(null),
+                    comp.getSiteOrLotSize(),
+                    comp.getYearBuilt(),
+                    Optional.ofNullable(comp.getConstruction()).orElse(null),
+                    Optional.ofNullable(comp.getCondition()).orElse(null),
+                    Optional.ofNullable(comp.getStyle()).orElse(null),
+                    comp.getTotalRooms(),
+                    comp.getBedrooms(),
+                    comp.getBathrooms(),
+                    comp.getGrossLivingArea(),
+                    Optional.ofNullable(comp.getBasementAndFinish()).orElse(null),
+                    Optional.ofNullable(comp.getHeating()).orElse(null),
+                    Optional.ofNullable(comp.getCooling()).orElse(null),
+                    Optional.ofNullable(comp.getGarage()).orElse(null),
+                    Optional.ofNullable(comp.getCarport()).orElse(null),
+                    Optional.ofNullable(comp.getAdditionalAmenities()).orElse(null),
+                    Optional.ofNullable(comp.getNetAdjustments()).orElse(null)
+            );
+        }
+    }
+
+    public BrokerPriceOpinionPDFInfoDTO getBPOInformationById(int id) {
+
+        String sql = "SELECT * FROM firstamerican.broker_price_opinion_pdf_info WHERE id = ?";
+
+        BrokerPriceOpinionPDFInfoDTO dto = prodBackupJdbcTemplate.queryForObject(sql, new Object[]{id},
+                (rs, rowNum) -> {
+                    BrokerPriceOpinionPDFInfoDTO bpo = new BrokerPriceOpinionPDFInfoDTO();
+                    bpo.setFullAddress(rs.getString("full_address"));
+                    bpo.setPropertyID(rs.getString("property_id"));
+                    bpo.setStatus(rs.getString("status"));
+                    bpo.setLongitude(rs.getString("longitude"));
+                    bpo.setLatitude(rs.getString("latitude"));
+                    bpo.setPlacekey(rs.getString("placekey"));
+
+                    bpo.setOrderInformation(mapOrderInformation(rs));
+                    bpo.setPropertyInformation(mapPropertyInformation(rs));
+                    bpo.setConditionInformation(mapConditionInformation(rs));
+                    bpo.setNeighborhoodInformation(mapNeighborhoodInformation(rs));
+                    return bpo;
+                }
+        );
+
+        String compsSQL = "SELECT * FROM firstamerican.broker_price_opinion_pdf_info_comps WHERE bpo_id = ?";
+
+        List<ComparablePropertyInformation> comps = prodBackupJdbcTemplate.query(compsSQL, new Object[]{id},
+                (rs, rowNum) -> mapComparableProperty(rs)
+        );
+
+        dto.setActiveComparablePropertyInformationList(comps.stream()
+                        .filter(c -> "Active".equalsIgnoreCase(c.getStatus()))
+                        .collect(Collectors.toList()));
+
+        dto.setClosedComparablePropertyInformationList(comps.stream()
+                        .filter(c -> "Closed".equalsIgnoreCase(c.getStatus()))
+                        .collect(Collectors.toList())
+        );
+
+        return dto;
+    }
+
+    private OrderInformation mapOrderInformation(ResultSet rs) throws SQLException {
+
+        OrderInformation info = new OrderInformation();
+
+        info.setLoanNumber(rs.getString("o_i_loan_number"));
+        info.setClient(rs.getString("o_i_client"));
+        info.setOrderFor(rs.getString("o_i_order_for"));
+        info.setOrderNumber(rs.getString("o_i_order_number"));
+        info.setBorrowerOrOwnerName(rs.getString("o_i_borrower_or_owner_name"));
+        info.setAddress(rs.getString("o_i_address"));
+        info.setCity(rs.getString("o_i_city"));
+        info.setState(rs.getString("o_i_state"));
+        info.setZipcode(rs.getString("o_i_zipcode"));
+        info.setCounty(rs.getString("o_i_county"));
+        info.setParcelID(rs.getString("o_i_parcel_id"));
+        info.setFeeSimpleORLeasehold(rs.getString("o_i_fee_simple_or_leasehold"));
+
+        return info;
+    }
+
+    private PropertyInformation mapPropertyInformation(ResultSet rs) throws SQLException {
+
+        PropertyInformation info = new PropertyInformation();
+
+        info.setNumberOfUnits(rs.getObject("p_i_number_of_units", Integer.class));
+        info.setPropertyType(rs.getString("p_i_property_type"));
+        info.setPropertyStyle(rs.getString("p_i_property_style"));
+        info.setSqftGLA(rs.getObject("p_i_sqft_gla", Integer.class));
+        info.setTotalRooms(rs.getObject("p_i_total_rooms", Integer.class));
+        info.setBedrooms(rs.getObject("p_i_bedrooms", Integer.class));
+        info.setBathrooms(rs.getObject("p_i_bathrooms", Double.class));
+        info.setGarageSpaces(rs.getObject("p_i_garage_spaces", Integer.class));
+        info.setGarage(rs.getString("p_i_garage"));
+        info.setYearBuilt(rs.getObject("p_i_year_built", Integer.class));
+        info.setView(rs.getString("p_i_view"));
+        info.setPool(rs.getString("p_i_pool"));
+        info.setSpa(rs.getString("p_i_spa"));
+        info.setFeaturePorch(rs.getString("p_i_feature_porch"));
+        info.setFeaturePatio(rs.getString("p_i_feature_patio"));
+        info.setFeatureDeck(rs.getString("p_i_feature_deck"));
+        info.setNumberOfFireplaces(rs.getObject("p_i_number_of_fireplaces", Integer.class));
+        info.setOverallCondition(rs.getString("p_i_overall_condition"));
+        info.setOccupancy(rs.getString("p_i_occupancy"));
+        info.setCurrentRent(rs.getObject("p_i_current_rent", Integer.class));
+        info.setMarketRent(rs.getObject("p_i_market_rent", Integer.class));
+        info.setIsListed(rs.getString("p_i_is_listed"));
+        info.setIsListedInPast12Months(rs.getObject("p_i_is_listed_in_past_12_months", Boolean.class));
+        info.setListPrice(rs.getObject("p_i_list_price", Integer.class));
+        info.setNameOfListingCompany(rs.getString("p_i_name_of_listing_company"));
+        info.setListingAgentPhone(rs.getString("p_i_listing_agent_phone"));
+        info.setIsTransferredInPast12Months(rs.getObject("p_i_is_transferred_in_past_12_months", Boolean.class));
+        info.setPriorSaleDate(rs.getString("p_i_prior_sale_date"));
+        info.setPriorSalePrice(rs.getObject("p_i_prior_sale_price", Double.class));
+        info.setCurrentTax(rs.getObject("p_i_current_tax", Double.class));
+        info.setDelinquentTax(rs.getObject("p_i_delinquent_tax", Double.class));
+        info.setCondoOrPUD(rs.getString("p_i_condo_or_pud"));
+        info.setFeeHOA(rs.getObject("p_i_fee_hoa", Double.class));
+        info.setZoning(rs.getString("p_i_zoning"));
+        info.setLotSize(rs.getObject("p_i_lot_size", Double.class));
+        info.setLandValue(rs.getObject("p_i_land_value", Double.class));
+        info.setIsConformsToNeighborhood(rs.getObject("p_i_is_conforms_to_neighborhood", Boolean.class));
+
+        return info;
+    }
+
+    private ConditionInformation mapConditionInformation(ResultSet rs) throws SQLException {
+
+        ConditionInformation info = new ConditionInformation();
+
+        info.setOverallCondition(rs.getString("c_i_condition_overall"));
+        info.setComments(rs.getString("c_i_condition_comments"));
+
+        return info;
+    }
+
+    private NeighborhoodInformation mapNeighborhoodInformation(ResultSet rs) throws SQLException {
+
+        NeighborhoodInformation info = new NeighborhoodInformation();
+
+        info.setMarketConditions(rs.getString("n_i_market_conditions"));
+        info.setNumberOfCompetitiveListings(rs.getInt("n_i_number_of_competitive_listings"));
+        info.setPriceRangeOfCurrentListingAndSalesFrom(rs.getInt("n_i_price_range_of_current_listing_and_sales_from"));
+        info.setPriceRangeOfCurrentListingAndSalesTo(rs.getInt("n_i_price_range_of_current_listing_and_sales_to"));
+        info.setSupplyAndDemand(rs.getString("n_i_supply_and_demand"));
+        info.setPositiveOrNegativeInfluences(rs.getString("n_i_positive_or_negative_influences"));
+        info.setLocation(rs.getString("n_i_location"));
+        info.setNeighborhoodTrend(rs.getString("n_i_neighborhood_trend"));
+        info.setHomesInNeighborhoodAre(rs.getString("n_i_homes_in_neighborhood_are"));
+        info.setAverageMarketTime(rs.getString("n_i_average_market_time"));
+        info.setMostProbableBuyer(rs.getString("n_i_most_probable_buyer"));
+
+        return info;
+    }
+
+    private ComparablePropertyInformation mapComparableProperty(ResultSet rs) throws SQLException {
+
+        ComparablePropertyInformation info = new ComparablePropertyInformation();
+
+        info.setCompNumber(rs.getInt("comp_number"));
+        info.setStatus(rs.getString("status"));
+        info.setAddress(rs.getString("address"));
+        info.setCity(rs.getString("city"));
+        info.setState(rs.getString("state"));
+        info.setZipcode(rs.getString("zipcode"));
+        info.setCounty(rs.getString("county"));
+        info.setProximity(Optional.ofNullable(rs.getObject("proximity")).map(o -> ((Number) o).doubleValue()).orElse(null));
+        info.setSalePrice(rs.getObject("sale_price", Integer.class));
+        info.setPricePerSqFt(rs.getObject("price_per_sqft", Double.class));
+        info.setOriginalListingPrice(rs.getObject("original_listing_price", Integer.class));
+        info.setCurrentListingPrice(rs.getObject("current_listing_price", Integer.class));
+        info.setSaleDate(rs.getString("sale_date"));
+        info.setListDate(rs.getString("list_date"));
+        info.setDaysOnMarket(rs.getObject("days_on_market", Integer.class));
+        info.setMlsID(rs.getString("mls_id"));
+        info.setFinancing(rs.getString("financing"));
+        info.setSalesConcession(rs.getString("sales_concession"));
+        info.setBankOrREOSale(rs.getString("bank_or_reo_sale"));
+        info.setLocation(rs.getString("location"));
+        info.setSiteOrView(rs.getString("site_or_view"));
+        info.setSiteOrLotSize(rs.getObject("site_or_lot_size", Double.class));
+        info.setYearBuilt(rs.getObject("year_built", Integer.class));
+        info.setConstruction(rs.getString("construction"));
+        info.setCondition(rs.getString("condition"));
+        info.setStyle(rs.getString("style"));
+        info.setTotalRooms(rs.getObject("total_rooms", Integer.class));
+        info.setBedrooms(rs.getObject("bedrooms", Integer.class));
+        info.setBathrooms(rs.getObject("bathrooms", Double.class));
+        info.setGrossLivingArea(rs.getObject("gross_living_area", Integer.class));
+        info.setBasementAndFinish(rs.getString("basement_and_finish"));
+        info.setHeating(rs.getString("heating"));
+        info.setCooling(rs.getString("cooling"));
+        info.setGarage(rs.getString("garage"));
+        info.setCarport(rs.getString("carport"));
+        info.setAdditionalAmenities(rs.getString("additional_amenities"));
+        info.setNetAdjustments(rs.getInt("net_adjustments"));
+
+        return info;
+    }
+
+    public void updateBPOInformation(Integer id, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+
+        String sql = "UPDATE firstamerican.broker_price_opinion_pdf_info SET " +
+
+                "full_address = ?, " +
+                "property_id = ?, " +
+                "status = ?, " +
+                "longitude = ?, " +
+                "latitude = ?, " +
+                "placekey = ?, " +
+
+                "o_i_loan_number = ?, " +
+                "o_i_client = ?, " +
+                "o_i_order_for = ?, " +
+                "o_i_order_number = ?, " +
+                "o_i_borrower_or_owner_name = ?, " +
+                "o_i_address = ?, " +
+                "o_i_city = ?, " +
+                "o_i_state = ?, " +
+                "o_i_zipcode = ?, " +
+                "o_i_county = ?, " +
+                "o_i_parcel_id = ?, " +
+                "o_i_fee_simple_or_leasehold = ?, " +
+
+                "p_i_number_of_units = ?, " +
+                "p_i_property_type = ?, " +
+                "p_i_property_style = ?, " +
+                "p_i_sqft_gla = ?, " +
+                "p_i_total_rooms = ?, " +
+                "p_i_bedrooms = ?, " +
+                "p_i_bathrooms = ?, " +
+                "p_i_garage_spaces = ?, " +
+                "p_i_garage = ?, " +
+                "p_i_year_built = ?, " +
+                "p_i_view = ?, " +
+                "p_i_pool = ?, " +
+                "p_i_spa = ?, " +
+                "p_i_feature_porch = ?, " +
+                "p_i_feature_patio = ?, " +
+                "p_i_feature_deck = ?, " +
+                "p_i_number_of_fireplaces = ?, " +
+                "p_i_overall_condition = ?, " +
+                "p_i_occupancy = ?, " +
+                "p_i_current_rent = ?, " +
+                "p_i_market_rent = ?, " +
+                "p_i_is_listed = ?, " +
+                "p_i_is_listed_in_past_12_months = ?, " +
+                "p_i_list_price = ?, " +
+                "p_i_name_of_listing_company = ?, " +
+                "p_i_listing_agent_phone = ?, " +
+                "p_i_is_transferred_in_past_12_months = ?, " +
+                "p_i_prior_sale_date = ?, " +
+                "p_i_prior_sale_price = ?, " +
+                "p_i_current_tax = ?, " +
+                "p_i_delinquent_tax = ?, " +
+                "p_i_condo_or_pud = ?, " +
+                "p_i_fee_hoa = ?, " +
+                "p_i_zoning = ?, " +
+                "p_i_lot_size = ?, " +
+                "p_i_land_value = ?, " +
+                "p_i_is_conforms_to_neighborhood = ?, " +
+
+                "c_i_condition_overall = ?, " +
+                "c_i_condition_comments = ?, " +
+
+                "n_i_market_conditions = ?, " +
+                "n_i_number_of_competitive_listings = ?, " +
+                "n_i_price_range_of_current_listing_and_sales_from = ?, " +
+                "n_i_price_range_of_current_listing_and_sales_to = ?, " +
+                "n_i_supply_and_demand = ?, " +
+                "n_i_positive_or_negative_influences = ?, " +
+                "n_i_location = ?, " +
+                "n_i_neighborhood_trend = ?, " +
+                "n_i_homes_in_neighborhood_are = ?, " +
+                "n_i_average_market_time = ?, " +
+                "n_i_most_probable_buyer = ?, " +
+
+                "bpo_info_generation_status = ? " +
+                "WHERE id = ?";
+
+        prodJdbcTemplate.update(sql,
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getFullAddress()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyID()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getStatus()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getLongitude()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getLatitude()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPlacekey()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderFor()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getBorrowerOrOwnerName()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCounty()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getParcelID()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getFeeSimpleORLeasehold()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNumberOfUnits()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPropertyType()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPropertyStyle()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getSqftGLA()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getTotalRooms()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBedrooms()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getBathrooms()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarageSpaces()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getGarage()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getYearBuilt()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getView()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPool()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getSpa()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeaturePorch()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeaturePatio()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeatureDeck()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNumberOfFireplaces()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getOverallCondition()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getOccupancy()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCurrentRent()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getMarketRent()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsListed()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsListedInPast12Months()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getListPrice()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNameOfListingCompany()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getListingAgentPhone()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsTransferredInPast12Months()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPriorSaleDate()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPriorSalePrice()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCurrentTax()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getDelinquentTax()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCondoOrPUD()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeeHOA()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getZoning()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLotSize()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getLandValue()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsConformsToNeighborhood()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMarketConditions()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNumberOfCompetitiveListings()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesFrom()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesTo()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getSupplyAndDemand()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPositiveOrNegativeInfluences()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getLocation()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNeighborhoodTrend()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getHomesInNeighborhoodAre()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getAverageMarketTime()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMostProbableBuyer()).orElse(null),
+
+                "Completed",
+                id
+        );
+
+        updateBPOInformationComps(id, "Closed", brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList());
+        updateBPOInformationComps(id, "Active", brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList());
+    }
+
+    public void updateBPOInformationComps(Integer bpoId, String status, List<ComparablePropertyInformation> comps) {
+
+        String sql = "UPDATE firstamerican.broker_price_opinion_pdf_info_comps SET " +
+                "address = ?, city = ?, state = ?, zipcode = ?, county = ?, proximity = ?, sale_price = ?, " +
+                "price_per_sqft = ?, original_listing_price = ?, current_listing_price = ?, sale_date = ?, " +
+                "list_date = ?, days_on_market = ?, mls_id = ?, financing = ?, sales_concession = ?, " +
+                "bank_or_reo_sale = ?, location = ?, site_or_view = ?, site_or_lot_size = ?, year_built = ?, " +
+                "construction = ?, condition = ?, style = ?, total_rooms = ?, bedrooms = ?, bathrooms = ?, " +
+                "gross_living_area = ?, basement_and_finish = ?, heating = ?, cooling = ?, garage = ?, carport = ?, " +
+                "additional_amenities = ?, net_adjustments = ? " +
+                "WHERE bpo_id = ? AND comp_number = ? AND status = ?";
+
+        for (int i = 0; i < comps.size(); i++) {
+
+            ComparablePropertyInformation comp = comps.get(i);
+
+            int compNumber = i + 1;
+
+            prodJdbcTemplate.update(sql,
+                    Optional.ofNullable(comp.getAddress()).orElse(null),
+                    Optional.ofNullable(comp.getCity()).orElse(null),
+                    Optional.ofNullable(comp.getState()).orElse(null),
+                    Optional.ofNullable(comp.getZipcode()).orElse(null),
+                    Optional.ofNullable(comp.getCounty()).orElse(null),
+                    comp.getProximity(),
+                    comp.getSalePrice(),
+                    comp.getPricePerSqFt(),
+                    comp.getOriginalListingPrice(),
+                    comp.getCurrentListingPrice(),
+                    Optional.ofNullable(comp.getSaleDate()).orElse(null),
+                    Optional.ofNullable(comp.getListDate()).orElse(null),
+                    comp.getDaysOnMarket(),
+                    Optional.ofNullable(comp.getMlsID()).orElse(null),
+                    Optional.ofNullable(comp.getFinancing()).orElse(null),
+                    Optional.ofNullable(comp.getSalesConcession()).orElse(null),
+                    Optional.ofNullable(comp.getBankOrREOSale()).orElse(null),
+                    Optional.ofNullable(comp.getLocation()).orElse(null),
+                    Optional.ofNullable(comp.getSiteOrView()).orElse(null),
+                    comp.getSiteOrLotSize(),
+                    comp.getYearBuilt(),
+                    Optional.ofNullable(comp.getConstruction()).orElse(null),
+                    Optional.ofNullable(comp.getCondition()).orElse(null),
+                    Optional.ofNullable(comp.getStyle()).orElse(null),
+                    comp.getTotalRooms(),
+                    comp.getBedrooms(),
+                    comp.getBathrooms(),
+                    comp.getGrossLivingArea(),
+                    Optional.ofNullable(comp.getBasementAndFinish()).orElse(null),
+                    Optional.ofNullable(comp.getHeating()).orElse(null),
+                    Optional.ofNullable(comp.getCooling()).orElse(null),
+                    Optional.ofNullable(comp.getGarage()).orElse(null),
+                    Optional.ofNullable(comp.getCarport()).orElse(null),
+                    Optional.ofNullable(comp.getAdditionalAmenities()).orElse(null),
+                    Optional.ofNullable(comp.getNetAdjustments()).orElse(null),
+
+                    bpoId,
+                    compNumber,
+                    status
+            );
+        }
+    }
+
+    public void updateBPOInformationComp(Integer id, Integer compNumber, String status, ComparablePropertyInformation comp) {
+
+        String sql = "UPDATE firstamerican.broker_price_opinion_pdf_info_comps " +
+                "SET " +
+                "address = ?, city = ?, state = ?, zipcode = ?, county = ?, proximity = ?, sale_price = ?, " +
+                "price_per_sqft = ?, original_listing_price = ?, current_listing_price = ?, sale_date = ?, " +
+                "list_date = ?, days_on_market = ?, mls_id = ?, financing = ?, sales_concession = ?, " +
+                "bank_or_reo_sale = ?, location = ?, site_or_view = ?, site_or_lot_size = ?, year_built = ?, " +
+                "construction = ?, condition = ?, style = ?, total_rooms = ?, bedrooms = ?, bathrooms = ?, " +
+                "gross_living_area = ?, basement_and_finish = ?, heating = ?, cooling = ?, garage = ?, carport = ?, " +
+                "additional_amenities = ?, net_adjustments = ? " +
+                "WHERE bpo_id = ? AND comp_number = ? AND status = ?";
+
+        prodJdbcTemplate.update(sql,
+                comp.getAddress(),
+                comp.getCity(),
+                comp.getState(),
+                comp.getZipcode(),
+                comp.getCounty(),
+                comp.getProximity(),
+                comp.getSalePrice(),
+                comp.getPricePerSqFt(),
+                comp.getOriginalListingPrice(),
+                comp.getCurrentListingPrice(),
+                comp.getSaleDate(),
+                comp.getListDate(),
+                comp.getDaysOnMarket(),
+                comp.getMlsID(),
+                comp.getFinancing(),
+                comp.getSalesConcession(),
+                comp.getBankOrREOSale(),
+                comp.getLocation(),
+                comp.getSiteOrView(),
+                comp.getSiteOrLotSize(),
+                comp.getYearBuilt(),
+                comp.getConstruction(),
+                comp.getCondition(),
+                comp.getStyle(),
+                comp.getTotalRooms(),
+                comp.getBedrooms(),
+                comp.getBathrooms(),
+                comp.getGrossLivingArea(),
+                comp.getBasementAndFinish(),
+                comp.getHeating(),
+                comp.getCooling(),
+                comp.getGarage(),
+                comp.getCarport(),
+                comp.getAdditionalAmenities(),
+                comp.getNetAdjustments(),
+                id,
+                compNumber,
+                status
+        );
     }
 
     public BrokerPriceOpinionPDFInfoDTO getBrokerPriceOpinionPDFInformation(String propertyID) {
@@ -536,6 +1243,10 @@ public class BrokerPriceOpinionPDFInfoService {
 
         brokerPriceOpinionPDFInfoDTO.setPropertyInformation(propertyInformation);
 
+        ConditionInformation conditionInformation = new ConditionInformation();
+
+        brokerPriceOpinionPDFInfoDTO.setConditionInformation(conditionInformation);
+
         NeighborhoodInformation neighborhoodInformation = new NeighborhoodInformation();
 
         neighborhoodInformation.setLocation(findLocationDensity(
@@ -770,11 +1481,11 @@ public class BrokerPriceOpinionPDFInfoService {
                     : null;
 
             if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
-                comp.setSiteORLotSize(siteORLotSizeCPClosedDTAPISource);
+                comp.setSiteOrLotSize(siteORLotSizeCPClosedDTAPISource);
             } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
-                comp.setSiteORLotSize(siteORLotSizeCPClosedPlatlabSource);
+                comp.setSiteOrLotSize(siteORLotSizeCPClosedPlatlabSource);
             } else {
-                comp.setSiteORLotSize(null);
+                comp.setSiteOrLotSize(null);
             }
 
             Integer yearBuiltCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.YearBuilt;
@@ -857,11 +1568,11 @@ public class BrokerPriceOpinionPDFInfoService {
                     : null;
 
             if (hasBasementCPClosedPlatlabSource != null) {
-                comp.setBasement(hasBasementCPClosedPlatlabSource ? "Yes" : "No");
+                comp.setBasementAndFinish(hasBasementCPClosedPlatlabSource ? "Yes" : "No");
             } else if (basementAreaCPClosedDTAPISource != null) {
-                comp.setBasement(basementAreaCPClosedDTAPISource > 0 ? "Yes" : "No");
+                comp.setBasementAndFinish(basementAreaCPClosedDTAPISource > 0 ? "Yes" : "No");
             } else {
-                comp.setBasement("Unk.");
+                comp.setBasementAndFinish("Unk.");
             }
 
             String heatTypeCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
@@ -1149,11 +1860,11 @@ public class BrokerPriceOpinionPDFInfoService {
                     : null;
 
             if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
-                comp.setSiteORLotSize(siteORLotSizeCPClosedDTAPISource);
+                comp.setSiteOrLotSize(siteORLotSizeCPClosedDTAPISource);
             } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
-                comp.setSiteORLotSize(siteORLotSizeCPClosedPlatlabSource);
+                comp.setSiteOrLotSize(siteORLotSizeCPClosedPlatlabSource);
             } else {
-                comp.setSiteORLotSize(null);
+                comp.setSiteOrLotSize(null);
             }
 
             Integer yearBuiltCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.YearBuilt;
@@ -1236,11 +1947,11 @@ public class BrokerPriceOpinionPDFInfoService {
                     : null;
 
             if (hasBasementCPActivePlatlabSource != null) {
-                comp.setBasement(hasBasementCPActivePlatlabSource ? "Yes" : "No");
+                comp.setBasementAndFinish(hasBasementCPActivePlatlabSource ? "Yes" : "No");
             } else if (basementAreaCPActiveDTAPISource != null) {
-                comp.setBasement(basementAreaCPActiveDTAPISource > 0 ? "Yes" : "No");
+                comp.setBasementAndFinish(basementAreaCPActiveDTAPISource > 0 ? "Yes" : "No");
             } else {
-                comp.setBasement("Unk.");
+                comp.setBasementAndFinish("Unk.");
             }
 
             String heatTypeCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
