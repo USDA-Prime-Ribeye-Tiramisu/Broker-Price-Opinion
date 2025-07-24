@@ -44,6 +44,12 @@ public class BrokerPriceOpinionController {
     }
 
     @CrossOrigin
+    @GetMapping("/get-bpo-information-status-by-id")
+    public String getBPOInformationStatusById(@RequestParam("id") Integer id) {
+        return brokerPriceOpinionPDFInfoService.getBPOInformationStatusById(id);
+    }
+
+    @CrossOrigin
     @GetMapping("/get-bpo-information-by-id")
     public ResponseEntity<BrokerPriceOpinionPDFInfoDTO> getBPOInformationById(@RequestParam("id") Integer id) {
         try {
