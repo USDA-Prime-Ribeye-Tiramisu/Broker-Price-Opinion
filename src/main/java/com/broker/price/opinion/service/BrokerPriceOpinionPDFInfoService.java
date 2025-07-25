@@ -73,6 +73,14 @@ public class BrokerPriceOpinionPDFInfoService {
         return id;
     }
 
+    public String getBPOInformationStatusById(Integer id) {
+
+        String sql = "select bpo_info_generation_status from firstamerican.broker_price_opinion_pdf_info " +
+                "where id = " + id;
+
+        return prodBackupJdbcTemplate.queryForObject(sql, String.class);
+    }
+
     public void generateBPOInformation(Integer id, String propertyID) {
 
         BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = getBrokerPriceOpinionPDFInformation(propertyID);
