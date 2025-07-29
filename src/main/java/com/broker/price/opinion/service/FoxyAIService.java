@@ -7,15 +7,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 @Slf4j
@@ -36,7 +40,9 @@ public class FoxyAIService {
         this.prodBackupJdbcTemplate = prodBackupJdbcTemplate;
     }
 
-    public String createImageGroup(String address) {
+    public void createImageGroup(int bpoId, String address) {
+
+        int recordId = createBPOFoxyAIServiceUsageRow(bpoId, address);
 
         try {
 
@@ -49,13 +55,12 @@ public class FoxyAIService {
 
             String jsonInputString = String.format("{ \"name\": \"%s\", \"address\": \"%s\" }", address, address);
 
-            try (OutputStream os = connection.getOutputStream()) {
+            try (OutputStream outputStream = connection.getOutputStream()) {
                 byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
+                outputStream.write(input, 0, input.length);
             }
 
             String response;
-
             try (Scanner scanner = new Scanner(connection.getInputStream(), "UTF-8")) {
                 response = scanner.useDelimiter("\\A").next();
             }
@@ -64,19 +69,18 @@ public class FoxyAIService {
 
             JSONObject json = new JSONObject(response);
 
-            if (json.has("status") && "completed".equals(json.getString("status"))) {
-                return json.getString("_id");
+            if ("completed".equals(json.optString("status")) && json.optString("_id") != null) {
+                updateImagesGroupCreationStatusById(recordId, "Done", json.optString("_id"));
             } else {
-                return null;
+                updateImagesGroupCreationStatusById(recordId, "Failed", null);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
     }
 
-    public String uploadImagesBatchUserGroup(String groupId, String[] imageUrls) {
+    public void uploadImagesBatchUserGroup(int recordId, String groupId, List<String> imageURLs) {
 
         try {
 
@@ -91,7 +95,7 @@ public class FoxyAIService {
             requestBody.put("imageGroups", new JSONArray().put(groupId));
 
             JSONArray imagesArray = new JSONArray();
-            for (String imageUrl : imageUrls) {
+            for (String imageUrl : imageURLs) {
                 JSONObject imageObject = new JSONObject();
                 imageObject.put("url", imageUrl);
                 imageObject.put("models", new JSONArray().put("condition_score"));
@@ -106,39 +110,50 @@ public class FoxyAIService {
 
             String response;
             try (Scanner scanner = new Scanner(connection.getInputStream(), "UTF-8")) {
-                response = scanner.useDelimiter("\\A").next();
+                response = scanner.useDelimiter("\\A").hasNext() ? scanner.next() : "";
             }
 
             connection.disconnect();
 
             JSONObject json = new JSONObject(response);
 
-            if (json.has("status") && "ok".equalsIgnoreCase(json.getString("status"))) {
-                return "Success";
+            JSONArray imagesArrayResponse = json.optJSONArray("images");
+
+            boolean allProcessing = true;
+
+            if (imagesArrayResponse != null) {
+                for (int i = 0; i < imagesArrayResponse.length(); i++) {
+                    JSONObject image = imagesArrayResponse.getJSONObject(i);
+                    if (!"processing".equalsIgnoreCase(image.optString("status"))) {
+                        allProcessing = false;
+                    }
+                }
+            }
+
+            if (allProcessing) {
+                updateBatchUploadStatusById(recordId, "Done", String.join(",", imageURLs));
             } else {
-                return "Fail";
+                updateBatchUploadStatusById(recordId, "Failed", String.join(",", imageURLs));
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "Failed";
         }
     }
 
-    public List<Double> getConditionScores(String groupId) {
+    public void getConditionScores(int recordId, String groupId) {
 
         List<Double> conditionScores = new ArrayList<>();
 
         try {
+
             URL url = new URL("https://api.foxyai.com/image-group/" + groupId + "/results");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Authorization", "Bearer " + foxyAIApiKey);
 
             String response;
-
-            try (InputStream inputStream = connection.getInputStream();
-                 Scanner scanner = new Scanner(inputStream, "UTF-8")) {
+            try (Scanner scanner = new Scanner(connection.getInputStream(), "UTF-8")) {
                 response = scanner.useDelimiter("\\A").next();
             }
 
@@ -166,10 +181,67 @@ public class FoxyAIService {
                 }
             }
 
+            if (!conditionScores.isEmpty()) {
+                double sum = 0;
+                for (double score : conditionScores) {sum += score;}
+                double conditionScore = sum / conditionScores.size();
+                updateConditionScoreStatusById(recordId, "Done", conditionScore);
+            } else {
+                updateConditionScoreStatusById(recordId, "Failed", null);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
-        return conditionScores;
+    public Integer createBPOFoxyAIServiceUsageRow(int bpoId, String address) {
+
+        String sql = "INSERT INTO firstamerican.bpo_foxyai_service_usage (bpo_id, address, group_name) " +
+                "VALUES (?, ?, ?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        prodJdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, bpoId);
+            ps.setString(2, address);
+            ps.setString(3, address);
+            return ps;
+        }, keyHolder);
+
+        Map<String, Object> keys = keyHolder.getKeys();
+        if (keys != null && keys.containsKey("id")) {
+            return ((Number) keys.get("id")).intValue();
+        } else {
+            throw new RuntimeException("Failed to retrieve generated id");
+        }
+    }
+
+    public void updateImagesGroupCreationStatusById(int id, String status, String groupId) {
+
+        String sql = "UPDATE firstamerican.bpo_foxyai_service_usage " +
+                "SET images_group_creation_status = ?, group_id = ? " +
+                "WHERE id = ?";
+
+        prodJdbcTemplate.update(sql, status, groupId, id);
+    }
+
+    public void updateBatchUploadStatusById(int id, String batchUploadStatus, String imageURLs) {
+
+        String sql = "UPDATE firstamerican.bpo_foxyai_service_usage " +
+                "SET batch_upload_status = ?, images_urls = ? " +
+                "WHERE id = ?";
+
+        prodJdbcTemplate.update(sql, batchUploadStatus, imageURLs, id);
+    }
+
+    public void updateConditionScoreStatusById(int id, String conditionReportStatus, Double conditionScore) {
+
+        String sql = "UPDATE firstamerican.bpo_foxyai_service_usage " +
+                "SET condition_report_status = ?, condition_score = ? " +
+                "WHERE id = ?";
+
+        prodJdbcTemplate.update(sql, conditionReportStatus, conditionScore, id);
     }
 }
