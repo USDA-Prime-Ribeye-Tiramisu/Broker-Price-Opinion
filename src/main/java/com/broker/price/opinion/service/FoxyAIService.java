@@ -11,7 +11,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -83,12 +82,6 @@ public class FoxyAIService {
 
     public void uploadImagesBatchUserGroup(int recordId, String groupId, List<String> imageURLs) {
 
-        imageURLs.add("https://dvvjkgh94f2v6.cloudfront.net/7b68097c/389664914/83dcefb7.jpeg");
-        imageURLs.add("https://dvvjkgh94f2v6.cloudfront.net/7b68097c/389664914/1ad5be0d.jpeg");
-        imageURLs.add("https://dvvjkgh94f2v6.cloudfront.net/7b68097c/389664914/6dd28e9b.jpeg");
-        imageURLs.add("https://dvvjkgh94f2v6.cloudfront.net/7b68097c/389664914/f3b61b38.jpeg");
-        imageURLs.add("https://dvvjkgh94f2v6.cloudfront.net/7b68097c/389664914/d8819d45.jpeg");
-
         try {
 
             URL url = new URL("https://api.foxyai.com/image/batch");
@@ -148,11 +141,12 @@ public class FoxyAIService {
         }
     }
 
-    public List<Double> getConditionScores(String groupId) {
+    public void getConditionScores(int recordId, String groupId) {
 
         List<Double> conditionScores = new ArrayList<>();
 
         try {
+
             URL url = new URL("https://api.foxyai.com/image-group/" + groupId + "/results");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -187,11 +181,18 @@ public class FoxyAIService {
                 }
             }
 
+            if (!conditionScores.isEmpty()) {
+                double sum = 0;
+                for (double score : conditionScores) {sum += score;}
+                double conditionScore = sum / conditionScores.size();
+                updateConditionScoreStatusById(recordId, "Done", conditionScore);
+            } else {
+                updateConditionScoreStatusById(recordId, "Failed", null);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return conditionScores;
     }
 
     public Integer createBPOFoxyAIServiceUsageRow(int bpoId, String address) {
@@ -233,5 +234,14 @@ public class FoxyAIService {
                 "WHERE id = ?";
 
         prodJdbcTemplate.update(sql, batchUploadStatus, imageURLs, id);
+    }
+
+    public void updateConditionScoreStatusById(int id, String conditionReportStatus, Double conditionScore) {
+
+        String sql = "UPDATE firstamerican.bpo_foxyai_service_usage " +
+                "SET condition_report_status = ?, condition_score = ? " +
+                "WHERE id = ?";
+
+        prodJdbcTemplate.update(sql, conditionReportStatus, conditionScore, id);
     }
 }
