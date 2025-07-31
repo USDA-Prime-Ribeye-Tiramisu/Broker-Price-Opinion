@@ -1321,354 +1321,361 @@ public class BrokerPriceOpinionPDFInfoService {
 
         System.out.println("FLOW CHECK - " + "closed comps query 4 done");
 
-        String queryCompsClosedTrino = compsSearchQueryBuilder(resultCompsListingsSearchClosed, brokerPriceOpinionPDFInfoDTO);
+        List<Map<String, Object>> resultCompsClosed = null;
 
-        List<Map<String, Object>> resultCompsClosed = trinoJdbcTemplate.query(queryCompsClosedTrino, rs -> {
-            List<Map<String, Object>> rows = new ArrayList<>();
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+        if (!resultCompsListingsSearchClosed.isEmpty()) {
 
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnLabel(i);
-                    Object value = rs.getObject(i);
-                    row.put(columnName, value);
+            String queryCompsClosedTrino = compsSearchQueryBuilder(resultCompsListingsSearchClosed, brokerPriceOpinionPDFInfoDTO);
+
+            resultCompsClosed = trinoJdbcTemplate.query(queryCompsClosedTrino, rs -> {
+                List<Map<String, Object>> rows = new ArrayList<>();
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(i);
+                        row.put(columnName, value);
+                    }
+                    rows.add(row);
                 }
-                rows.add(row);
-            }
 
-            return rows;
-        });
+                return rows;
+            });
+        }
 
         System.out.println("FLOW CHECK - " + "closed comps trino server query done");
 
         List<ComparablePropertyInformation> closedComparablePropertyInformationList = new ArrayList<>();
 
-        for (Map<String, Object> compClosed : resultCompsClosed) {
+        if (!closedComparablePropertyInformationList.isEmpty()) {
+            for (Map<String, Object> compClosed : resultCompsClosed) {
 
-            System.out.println("propertyDetailReportDataCP call start");
+                System.out.println("propertyDetailReportDataCP call start");
 
-            propertyDetailReportResponseComparableProperty = getPropertyDetailReportByFullAddressDTAPI(compClosed.get("address") + ", " + compClosed.get("city") + ", " + compClosed.get("state") + " " + compClosed.get("zip") + ", United States");
+                propertyDetailReportResponseComparableProperty = getPropertyDetailReportByFullAddressDTAPI(compClosed.get("address") + ", " + compClosed.get("city") + ", " + compClosed.get("state") + " " + compClosed.get("zip") + ", United States");
 
-            if (propertyDetailReportResponseComparableProperty == null) {
-                System.out.println("issue with DT API, skip to the next property");
-                continue;
-            }
-
-            System.out.println(propertyDetailReportResponseComparableProperty);
-
-            PropertyDetailReportData propertyDetailReportDataCP = propertyDetailReportResponseComparableProperty.Reports.get(0).Data;
-
-            System.out.println("propertyDetailReportDataCP call done");
-
-            ComparablePropertyInformation comp = new ComparablePropertyInformation();
-
-            String addressCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
-            String addressCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("address")
-                    : null;
-
-            if (addressCPClosedDTAPISource != null && !addressCPClosedDTAPISource.isEmpty()) {
-                comp.setAddress(addressCPClosedDTAPISource);
-            } else if (addressCPClosedPlatlabSource != null && !addressCPClosedPlatlabSource.isEmpty()) {
-                comp.setAddress(addressCPClosedPlatlabSource);
-            } else {
-                comp.setAddress(null);
-            }
-
-            String cityCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.City;
-            String cityCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("city")
-                    : null;
-
-            if (cityCPClosedDTAPISource != null && !cityCPClosedDTAPISource.isEmpty()) {
-                comp.setCity(cityCPClosedDTAPISource);
-            } else if (cityCPClosedPlatlabSource != null && !cityCPClosedPlatlabSource.isEmpty()) {
-                comp.setCity(cityCPClosedPlatlabSource);
-            } else {
-                comp.setCity(null);
-            }
-
-            String stateCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.State;
-            String stateCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("state")
-                    : null;
-
-            if (stateCPClosedDTAPISource != null && !stateCPClosedDTAPISource.isEmpty()) {
-                comp.setState(stateCPClosedDTAPISource);
-            } else if (stateCPClosedPlatlabSource != null && !stateCPClosedPlatlabSource.isEmpty()) {
-                comp.setState(stateCPClosedPlatlabSource);
-            } else {
-                comp.setState(null);
-            }
-
-            String zipcodeCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.Zip9;
-            String zipcodeCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("zip")
-                    : null;
-
-            if (zipcodeCPClosedDTAPISource != null && !zipcodeCPClosedDTAPISource.isEmpty()) {
-                comp.setZipcode(zipcodeCPClosedDTAPISource);
-            } else if (zipcodeCPClosedPlatlabSource != null && !zipcodeCPClosedPlatlabSource.isEmpty()) {
-                comp.setZipcode(zipcodeCPClosedPlatlabSource);
-            } else {
-                comp.setZipcode(null);
-            }
-
-            String countyCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.County;
-            String countyCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("county")
-                    : null;
-
-            if (countyCPClosedDTAPISource != null && !countyCPClosedDTAPISource.isEmpty()) {
-                comp.setCounty(countyCPClosedDTAPISource);
-            } else if (countyCPClosedPlatlabSource != null && !countyCPClosedPlatlabSource.isEmpty()) {
-                comp.setCounty(countyCPClosedPlatlabSource);
-            } else {
-                comp.setCounty(null);
-            }
-
-            Double proximityCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Double) compClosed.get("proximity")
-                    : null;
-
-            if (proximityCPClosedPlatlabSource != null) {
-                comp.setProximity(proximityCPClosedPlatlabSource);
-            } else {
-                comp.setProximity(null);
-            }
-
-            Integer salePriceCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("price")
-                    : null;
-
-            if (salePriceCPClosedPlatlabSource != null && salePriceCPClosedPlatlabSource != 0) {
-                comp.setSalePrice(salePriceCPClosedPlatlabSource);
-            } else {
-                comp.setSalePrice(null);
-            }
-
-            comp.setPricePerSqFt(BigDecimal.valueOf(Double.valueOf((Integer) compClosed.get("price")) / Double.parseDouble(String.valueOf((Integer) compClosed.get("square_feet")))).setScale(2, RoundingMode.HALF_UP).doubleValue());
-
-            Integer originalListingPriceCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("original_listing_price")
-                    : null;
-
-            if (originalListingPriceCPClosedPlatlabSource != null && originalListingPriceCPClosedPlatlabSource != 0) {
-                comp.setOriginalListingPrice(originalListingPriceCPClosedPlatlabSource);
-            } else {
-                comp.setOriginalListingPrice(null);
-            }
-
-            Integer currentListingPriceCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("price")
-                    : null;
-
-            if (currentListingPriceCPClosedPlatlabSource != null && currentListingPriceCPClosedPlatlabSource != 0) {
-                comp.setCurrentListingPrice(currentListingPriceCPClosedPlatlabSource);
-            } else {
-                comp.setCurrentListingPrice(null);
-            }
-
-            String saleDateCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("sold_date")
-                    : null;
-
-            if (saleDateCPClosedPlatlabSource != null && !saleDateCPClosedPlatlabSource.isEmpty()) {
-                comp.setSaleDate(saleDateCPClosedPlatlabSource);
-            } else {
-                comp.setSaleDate(null);
-            }
-
-            String listDateCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("mls_list_date")
-                    : null;
-
-            if (listDateCPClosedPlatlabSource != null && !listDateCPClosedPlatlabSource.isEmpty()) {
-                comp.setListDate(listDateCPClosedPlatlabSource);
-            } else {
-                comp.setListDate(null);
-            }
-
-            Integer daysOnMarketCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("days_on_market")
-                    : null;
-
-            if (daysOnMarketCPClosedPlatlabSource != null) {
-                comp.setDaysOnMarket(daysOnMarketCPClosedPlatlabSource);
-            } else {
-                comp.setDaysOnMarket(null);
-            }
-
-            String mlsIDCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("display_mls_number")
-                    : null;
-
-            if (mlsIDCPClosedPlatlabSource != null) {
-                comp.setMlsID(mlsIDCPClosedPlatlabSource);
-            } else {
-                comp.setMlsID(null);
-            }
-
-            comp.setLocation(findLocationDensity(String.valueOf(compClosed.get("longitude")), String.valueOf(compClosed.get("latitude"))));
-
-            Double siteORLotSizeCPClosedDTAPISource = propertyDetailReportDataCP.SiteInformation.Acres;
-            Double siteORLotSizeCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Double) compClosed.get("lot_size")
-                    : null;
-
-            if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
-                comp.setSiteOrLotSize(siteORLotSizeCPClosedDTAPISource);
-            } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
-                comp.setSiteOrLotSize(siteORLotSizeCPClosedPlatlabSource);
-            } else {
-                comp.setSiteOrLotSize(null);
-            }
-
-            Integer yearBuiltCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.YearBuilt;
-            Integer yearBuiltCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("year_built")
-                    : null;
-
-            if (yearBuiltCPClosedDTAPISource != null && yearBuiltCPClosedDTAPISource != 0) {
-                comp.setYearBuilt(yearBuiltCPClosedDTAPISource);
-            } else if (yearBuiltCPClosedPlatlabSource != null && yearBuiltCPClosedPlatlabSource != 0) {
-                comp.setYearBuilt(yearBuiltCPClosedPlatlabSource);
-            } else {
-                comp.setYearBuilt(null);
-            }
-
-            String styleCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Style;
-            String styleCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (String) compClosed.get("style")
-                    : null;
-
-            if (styleCPClosedDTAPISource != null && !styleCPClosedDTAPISource.isEmpty()) {
-                comp.setStyle(styleCPClosedDTAPISource);
-            } else if (styleCPClosedPlatlabSource != null && !styleCPClosedPlatlabSource.isEmpty()) {
-                comp.setStyle(styleCPClosedPlatlabSource);
-            } else {
-                comp.setStyle(null);
-            }
-
-            Integer totalRoomsCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.TotalRooms;
-
-            if (totalRoomsCPClosedDTAPISource != null && totalRoomsCPClosedDTAPISource != 0) {
-                propertyInformation.setTotalRooms(totalRoomsCPClosedDTAPISource);
-            } else {
-                propertyInformation.setTotalRooms(null);
-            }
-
-            Integer bedroomsCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Bedrooms;
-            Integer bedroomsCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("bedrooms")
-                    : null;
-
-            if (bedroomsCPClosedDTAPISource != null && bedroomsCPClosedDTAPISource != 0) {
-                comp.setBedrooms(bedroomsCPClosedDTAPISource);
-            } else if (bedroomsCPClosedPlatlabSource != null && bedroomsCPClosedPlatlabSource != 0) {
-                comp.setBedrooms(bedroomsCPClosedPlatlabSource);
-            } else {
-                comp.setBedrooms(null);
-            }
-
-            double bathroomsCPClosedDTAPISource;
-
-            int bathroomsFullCPClosedDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.FullBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.FullBath : 0;
-            int bathroomsHalfCPClosedDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.HalfBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.HalfBath : 0;
-
-            bathroomsCPClosedDTAPISource = bathroomsFullCPClosedDTAPISource + bathroomsHalfCPClosedDTAPISource / 2.0;
-
-            double bathroomsCPClosedPlatlabSource;
-
-            int bathroomsCPClosedFullPlatlabSource = 0;
-            int bathroomsCPClosedHalfPlatlabSource = 0;
-
-            if (compClosed != null && !compClosed.isEmpty()) {
-                bathroomsCPClosedFullPlatlabSource = (compClosed.get("bathrooms_full") != null) ? (int) compClosed.get("bathrooms_full") : 0;
-                bathroomsCPClosedHalfPlatlabSource = (compClosed.get("bathrooms_half") != null) ? (int) compClosed.get("bathrooms_half") : 0;
-            }
-
-            bathroomsCPClosedPlatlabSource = bathroomsCPClosedFullPlatlabSource + bathroomsCPClosedHalfPlatlabSource / 2.0;
-
-            if (bathroomsCPClosedDTAPISource != 0) {
-                comp.setBathrooms(bathroomsCPClosedDTAPISource);
-            } else if (bathroomsCPClosedPlatlabSource != 0) {
-                comp.setBathrooms(bathroomsCPClosedPlatlabSource);
-            } else {
-                comp.setBathrooms(null);
-            }
-
-            Integer basementAreaCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.BasementArea;
-            Boolean hasBasementCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Boolean) compClosed.get("has_basement")
-                    : null;
-
-            if (hasBasementCPClosedPlatlabSource != null) {
-                comp.setBasementAndFinish(hasBasementCPClosedPlatlabSource ? "Yes" : "No");
-            } else if (basementAreaCPClosedDTAPISource != null) {
-                comp.setBasementAndFinish(basementAreaCPClosedDTAPISource > 0 ? "Yes" : "No");
-            } else {
-                comp.setBasementAndFinish("Unk.");
-            }
-
-            String heatTypeCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
-            if (heatTypeCPClosedDTAPISource != null && !heatTypeCPClosedDTAPISource.isEmpty()) {
-                comp.setHeating(heatTypeCPClosedDTAPISource);
-            } else {
-                comp.setHeating("Unk.");
-            }
-
-            String airConditioningCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.AirConditioning;
-            if (airConditioningCPClosedDTAPISource != null && !airConditioningCPClosedDTAPISource.isEmpty()) {
-                comp.setCooling(airConditioningCPClosedDTAPISource);
-            } else {
-                comp.setCooling("Unk.");
-            }
-
-            Integer garageSpacesCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.GarageCapacity;
-            Integer garageSpacesCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("garage_spaces")
-                    : null;
-
-            if (garageSpacesCPClosedDTAPISource != null) {
-                if (garageSpacesCPClosedDTAPISource == 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPClosedDTAPISource + " car");
-                } else if (garageSpacesCPClosedDTAPISource > 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPClosedDTAPISource + " cars");
-                } else {
-                    comp.setGarage("No Garage");
+                if (propertyDetailReportResponseComparableProperty == null) {
+                    System.out.println("issue with DT API, skip to the next property");
+                    continue;
                 }
-            } else if (garageSpacesCPClosedPlatlabSource != null) {
-                if (garageSpacesCPClosedPlatlabSource == 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPClosedPlatlabSource + " car");
-                } else if (garageSpacesCPClosedPlatlabSource > 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPClosedPlatlabSource + " cars");
+
+                System.out.println(propertyDetailReportResponseComparableProperty);
+
+                PropertyDetailReportData propertyDetailReportDataCP = propertyDetailReportResponseComparableProperty.Reports.get(0).Data;
+
+                System.out.println("propertyDetailReportDataCP call done");
+
+                ComparablePropertyInformation comp = new ComparablePropertyInformation();
+
+                String addressCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
+                String addressCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("address")
+                        : null;
+
+                if (addressCPClosedDTAPISource != null && !addressCPClosedDTAPISource.isEmpty()) {
+                    comp.setAddress(addressCPClosedDTAPISource);
+                } else if (addressCPClosedPlatlabSource != null && !addressCPClosedPlatlabSource.isEmpty()) {
+                    comp.setAddress(addressCPClosedPlatlabSource);
                 } else {
-                    comp.setGarage("No Garage");
+                    comp.setAddress(null);
                 }
-            } else {
-                comp.setGarage(null);
-            }
 
-            Integer sqftCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.LivingArea;
-            Integer sqftCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
-                    ? (Integer) compClosed.get("square_feet")
-                    : null;
+                String cityCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.City;
+                String cityCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("city")
+                        : null;
 
-            if (sqftCPClosedDTAPISource != null && sqftCPClosedDTAPISource != 0) {
-                comp.setGrossLivingArea(sqftCPClosedDTAPISource);
-            } else if (sqftCPClosedPlatlabSource != null && sqftCPClosedPlatlabSource != 0) {
-                comp.setGrossLivingArea(sqftCPClosedPlatlabSource);
-            } else {
-                comp.setGrossLivingArea(null);
-            }
+                if (cityCPClosedDTAPISource != null && !cityCPClosedDTAPISource.isEmpty()) {
+                    comp.setCity(cityCPClosedDTAPISource);
+                } else if (cityCPClosedPlatlabSource != null && !cityCPClosedPlatlabSource.isEmpty()) {
+                    comp.setCity(cityCPClosedPlatlabSource);
+                } else {
+                    comp.setCity(null);
+                }
 
-            closedComparablePropertyInformationList.add(comp);
+                String stateCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.State;
+                String stateCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("state")
+                        : null;
 
-            if (closedComparablePropertyInformationList.size() == 3) {
-                break;
+                if (stateCPClosedDTAPISource != null && !stateCPClosedDTAPISource.isEmpty()) {
+                    comp.setState(stateCPClosedDTAPISource);
+                } else if (stateCPClosedPlatlabSource != null && !stateCPClosedPlatlabSource.isEmpty()) {
+                    comp.setState(stateCPClosedPlatlabSource);
+                } else {
+                    comp.setState(null);
+                }
+
+                String zipcodeCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.Zip9;
+                String zipcodeCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("zip")
+                        : null;
+
+                if (zipcodeCPClosedDTAPISource != null && !zipcodeCPClosedDTAPISource.isEmpty()) {
+                    comp.setZipcode(zipcodeCPClosedDTAPISource);
+                } else if (zipcodeCPClosedPlatlabSource != null && !zipcodeCPClosedPlatlabSource.isEmpty()) {
+                    comp.setZipcode(zipcodeCPClosedPlatlabSource);
+                } else {
+                    comp.setZipcode(null);
+                }
+
+                String countyCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.County;
+                String countyCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("county")
+                        : null;
+
+                if (countyCPClosedDTAPISource != null && !countyCPClosedDTAPISource.isEmpty()) {
+                    comp.setCounty(countyCPClosedDTAPISource);
+                } else if (countyCPClosedPlatlabSource != null && !countyCPClosedPlatlabSource.isEmpty()) {
+                    comp.setCounty(countyCPClosedPlatlabSource);
+                } else {
+                    comp.setCounty(null);
+                }
+
+                Double proximityCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Double) compClosed.get("proximity")
+                        : null;
+
+                if (proximityCPClosedPlatlabSource != null) {
+                    comp.setProximity(proximityCPClosedPlatlabSource);
+                } else {
+                    comp.setProximity(null);
+                }
+
+                Integer salePriceCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("price")
+                        : null;
+
+                if (salePriceCPClosedPlatlabSource != null && salePriceCPClosedPlatlabSource != 0) {
+                    comp.setSalePrice(salePriceCPClosedPlatlabSource);
+                } else {
+                    comp.setSalePrice(null);
+                }
+
+                comp.setPricePerSqFt(BigDecimal.valueOf(Double.valueOf((Integer) compClosed.get("price")) / Double.parseDouble(String.valueOf((Integer) compClosed.get("square_feet")))).setScale(2, RoundingMode.HALF_UP).doubleValue());
+
+                Integer originalListingPriceCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("original_listing_price")
+                        : null;
+
+                if (originalListingPriceCPClosedPlatlabSource != null && originalListingPriceCPClosedPlatlabSource != 0) {
+                    comp.setOriginalListingPrice(originalListingPriceCPClosedPlatlabSource);
+                } else {
+                    comp.setOriginalListingPrice(null);
+                }
+
+                Integer currentListingPriceCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("price")
+                        : null;
+
+                if (currentListingPriceCPClosedPlatlabSource != null && currentListingPriceCPClosedPlatlabSource != 0) {
+                    comp.setCurrentListingPrice(currentListingPriceCPClosedPlatlabSource);
+                } else {
+                    comp.setCurrentListingPrice(null);
+                }
+
+                String saleDateCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("sold_date")
+                        : null;
+
+                if (saleDateCPClosedPlatlabSource != null && !saleDateCPClosedPlatlabSource.isEmpty()) {
+                    comp.setSaleDate(saleDateCPClosedPlatlabSource);
+                } else {
+                    comp.setSaleDate(null);
+                }
+
+                String listDateCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("mls_list_date")
+                        : null;
+
+                if (listDateCPClosedPlatlabSource != null && !listDateCPClosedPlatlabSource.isEmpty()) {
+                    comp.setListDate(listDateCPClosedPlatlabSource);
+                } else {
+                    comp.setListDate(null);
+                }
+
+                Integer daysOnMarketCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("days_on_market")
+                        : null;
+
+                if (daysOnMarketCPClosedPlatlabSource != null) {
+                    comp.setDaysOnMarket(daysOnMarketCPClosedPlatlabSource);
+                } else {
+                    comp.setDaysOnMarket(null);
+                }
+
+                String mlsIDCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("display_mls_number")
+                        : null;
+
+                if (mlsIDCPClosedPlatlabSource != null) {
+                    comp.setMlsID(mlsIDCPClosedPlatlabSource);
+                } else {
+                    comp.setMlsID(null);
+                }
+
+                comp.setLocation(findLocationDensity(String.valueOf(compClosed.get("longitude")), String.valueOf(compClosed.get("latitude"))));
+
+                Double siteORLotSizeCPClosedDTAPISource = propertyDetailReportDataCP.SiteInformation.Acres;
+                Double siteORLotSizeCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Double) compClosed.get("lot_size")
+                        : null;
+
+                if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
+                    comp.setSiteOrLotSize(siteORLotSizeCPClosedDTAPISource);
+                } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
+                    comp.setSiteOrLotSize(siteORLotSizeCPClosedPlatlabSource);
+                } else {
+                    comp.setSiteOrLotSize(null);
+                }
+
+                Integer yearBuiltCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.YearBuilt;
+                Integer yearBuiltCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("year_built")
+                        : null;
+
+                if (yearBuiltCPClosedDTAPISource != null && yearBuiltCPClosedDTAPISource != 0) {
+                    comp.setYearBuilt(yearBuiltCPClosedDTAPISource);
+                } else if (yearBuiltCPClosedPlatlabSource != null && yearBuiltCPClosedPlatlabSource != 0) {
+                    comp.setYearBuilt(yearBuiltCPClosedPlatlabSource);
+                } else {
+                    comp.setYearBuilt(null);
+                }
+
+                String styleCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Style;
+                String styleCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (String) compClosed.get("style")
+                        : null;
+
+                if (styleCPClosedDTAPISource != null && !styleCPClosedDTAPISource.isEmpty()) {
+                    comp.setStyle(styleCPClosedDTAPISource);
+                } else if (styleCPClosedPlatlabSource != null && !styleCPClosedPlatlabSource.isEmpty()) {
+                    comp.setStyle(styleCPClosedPlatlabSource);
+                } else {
+                    comp.setStyle(null);
+                }
+
+                Integer totalRoomsCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.TotalRooms;
+
+                if (totalRoomsCPClosedDTAPISource != null && totalRoomsCPClosedDTAPISource != 0) {
+                    propertyInformation.setTotalRooms(totalRoomsCPClosedDTAPISource);
+                } else {
+                    propertyInformation.setTotalRooms(null);
+                }
+
+                Integer bedroomsCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Bedrooms;
+                Integer bedroomsCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("bedrooms")
+                        : null;
+
+                if (bedroomsCPClosedDTAPISource != null && bedroomsCPClosedDTAPISource != 0) {
+                    comp.setBedrooms(bedroomsCPClosedDTAPISource);
+                } else if (bedroomsCPClosedPlatlabSource != null && bedroomsCPClosedPlatlabSource != 0) {
+                    comp.setBedrooms(bedroomsCPClosedPlatlabSource);
+                } else {
+                    comp.setBedrooms(null);
+                }
+
+                double bathroomsCPClosedDTAPISource;
+
+                int bathroomsFullCPClosedDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.FullBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.FullBath : 0;
+                int bathroomsHalfCPClosedDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.HalfBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.HalfBath : 0;
+
+                bathroomsCPClosedDTAPISource = bathroomsFullCPClosedDTAPISource + bathroomsHalfCPClosedDTAPISource / 2.0;
+
+                double bathroomsCPClosedPlatlabSource;
+
+                int bathroomsCPClosedFullPlatlabSource = 0;
+                int bathroomsCPClosedHalfPlatlabSource = 0;
+
+                if (compClosed != null && !compClosed.isEmpty()) {
+                    bathroomsCPClosedFullPlatlabSource = (compClosed.get("bathrooms_full") != null) ? (int) compClosed.get("bathrooms_full") : 0;
+                    bathroomsCPClosedHalfPlatlabSource = (compClosed.get("bathrooms_half") != null) ? (int) compClosed.get("bathrooms_half") : 0;
+                }
+
+                bathroomsCPClosedPlatlabSource = bathroomsCPClosedFullPlatlabSource + bathroomsCPClosedHalfPlatlabSource / 2.0;
+
+                if (bathroomsCPClosedDTAPISource != 0) {
+                    comp.setBathrooms(bathroomsCPClosedDTAPISource);
+                } else if (bathroomsCPClosedPlatlabSource != 0) {
+                    comp.setBathrooms(bathroomsCPClosedPlatlabSource);
+                } else {
+                    comp.setBathrooms(null);
+                }
+
+                Integer basementAreaCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.BasementArea;
+                Boolean hasBasementCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Boolean) compClosed.get("has_basement")
+                        : null;
+
+                if (hasBasementCPClosedPlatlabSource != null) {
+                    comp.setBasementAndFinish(hasBasementCPClosedPlatlabSource ? "Yes" : "No");
+                } else if (basementAreaCPClosedDTAPISource != null) {
+                    comp.setBasementAndFinish(basementAreaCPClosedDTAPISource > 0 ? "Yes" : "No");
+                } else {
+                    comp.setBasementAndFinish("Unk.");
+                }
+
+                String heatTypeCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
+                if (heatTypeCPClosedDTAPISource != null && !heatTypeCPClosedDTAPISource.isEmpty()) {
+                    comp.setHeating(heatTypeCPClosedDTAPISource);
+                } else {
+                    comp.setHeating("Unk.");
+                }
+
+                String airConditioningCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.AirConditioning;
+                if (airConditioningCPClosedDTAPISource != null && !airConditioningCPClosedDTAPISource.isEmpty()) {
+                    comp.setCooling(airConditioningCPClosedDTAPISource);
+                } else {
+                    comp.setCooling("Unk.");
+                }
+
+                Integer garageSpacesCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.GarageCapacity;
+                Integer garageSpacesCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("garage_spaces")
+                        : null;
+
+                if (garageSpacesCPClosedDTAPISource != null) {
+                    if (garageSpacesCPClosedDTAPISource == 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPClosedDTAPISource + " car");
+                    } else if (garageSpacesCPClosedDTAPISource > 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPClosedDTAPISource + " cars");
+                    } else {
+                        comp.setGarage("No Garage");
+                    }
+                } else if (garageSpacesCPClosedPlatlabSource != null) {
+                    if (garageSpacesCPClosedPlatlabSource == 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPClosedPlatlabSource + " car");
+                    } else if (garageSpacesCPClosedPlatlabSource > 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPClosedPlatlabSource + " cars");
+                    } else {
+                        comp.setGarage("No Garage");
+                    }
+                } else {
+                    comp.setGarage(null);
+                }
+
+                Integer sqftCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.LivingArea;
+                Integer sqftCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                        ? (Integer) compClosed.get("square_feet")
+                        : null;
+
+                if (sqftCPClosedDTAPISource != null && sqftCPClosedDTAPISource != 0) {
+                    comp.setGrossLivingArea(sqftCPClosedDTAPISource);
+                } else if (sqftCPClosedPlatlabSource != null && sqftCPClosedPlatlabSource != 0) {
+                    comp.setGrossLivingArea(sqftCPClosedPlatlabSource);
+                } else {
+                    comp.setGrossLivingArea(null);
+                }
+
+                closedComparablePropertyInformationList.add(comp);
+
+                if (closedComparablePropertyInformationList.size() == 3) {
+                    break;
+                }
             }
         }
 
@@ -1723,354 +1730,361 @@ public class BrokerPriceOpinionPDFInfoService {
 
         System.out.println("FLOW CHECK - " + "active comps query 4 done");
 
-        String queryCompsActiveTrino = compsSearchQueryBuilder(resultCompsListingsSearchActive, brokerPriceOpinionPDFInfoDTO);
+        List<Map<String, Object>> resultCompsActive = null;
 
-        List<Map<String, Object>> resultCompsActive = trinoJdbcTemplate.query(queryCompsActiveTrino, rs -> {
-            List<Map<String, Object>> rows = new ArrayList<>();
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+        if (!resultCompsListingsSearchClosed.isEmpty()) {
 
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnLabel(i);
-                    Object value = rs.getObject(i);
-                    row.put(columnName, value);
+            String queryCompsClosedTrino = compsSearchQueryBuilder(resultCompsListingsSearchActive, brokerPriceOpinionPDFInfoDTO);
+
+            resultCompsActive = trinoJdbcTemplate.query(queryCompsClosedTrino, rs -> {
+                List<Map<String, Object>> rows = new ArrayList<>();
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(i);
+                        row.put(columnName, value);
+                    }
+                    rows.add(row);
                 }
-                rows.add(row);
-            }
 
-            return rows;
-        });
+                return rows;
+            });
+        }
 
         System.out.println("FLOW CHECK - " + "active comps trino server query done");
 
         List<ComparablePropertyInformation> activeComparablePropertyInformationList = new ArrayList<>();
 
-        for (Map<String, Object> compActive : resultCompsActive) {
+        if (!activeComparablePropertyInformationList.isEmpty()) {
+            for (Map<String, Object> compActive : resultCompsActive) {
 
-            System.out.println("propertyDetailReportDataCP call start");
+                System.out.println("propertyDetailReportDataCP call start");
 
-            propertyDetailReportResponseComparableProperty = getPropertyDetailReportByFullAddressDTAPI(compActive.get("address") + ", " + compActive.get("city") + ", " + compActive.get("state") + " " + compActive.get("zip") + ", United States");
+                propertyDetailReportResponseComparableProperty = getPropertyDetailReportByFullAddressDTAPI(compActive.get("address") + ", " + compActive.get("city") + ", " + compActive.get("state") + " " + compActive.get("zip") + ", United States");
 
-            if (propertyDetailReportResponseComparableProperty == null) {
-                System.out.println("issue with DT API, skip to the next property");
-                continue;
-            }
-
-            System.out.println(propertyDetailReportResponseComparableProperty);
-
-            PropertyDetailReportData propertyDetailReportDataCP = propertyDetailReportResponseComparableProperty.Reports.get(0).Data;
-
-            System.out.println("propertyDetailReportDataCP call done");
-
-            ComparablePropertyInformation comp = new ComparablePropertyInformation();
-
-            String addressCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
-            String addressCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("address")
-                    : null;
-
-            if (addressCPActiveDTAPISource != null && !addressCPActiveDTAPISource.isEmpty()) {
-                comp.setAddress(addressCPActiveDTAPISource);
-            } else if (addressCPActivePlatlabSource != null && !addressCPActivePlatlabSource.isEmpty()) {
-                comp.setAddress(addressCPActivePlatlabSource);
-            } else {
-                comp.setAddress(null);
-            }
-
-            String cityCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.City;
-            String cityCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("city")
-                    : null;
-
-            if (cityCPActiveDTAPISource != null && !cityCPActiveDTAPISource.isEmpty()) {
-                comp.setCity(cityCPActiveDTAPISource);
-            } else if (cityCPActivePlatlabSource != null && !cityCPActivePlatlabSource.isEmpty()) {
-                comp.setCity(cityCPActivePlatlabSource);
-            } else {
-                comp.setCity(null);
-            }
-
-            String stateCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.State;
-            String stateCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("state")
-                    : null;
-
-            if (stateCPActiveDTAPISource != null && !stateCPActiveDTAPISource.isEmpty()) {
-                comp.setState(stateCPActiveDTAPISource);
-            } else if (stateCPActivePlatlabSource != null && !stateCPActivePlatlabSource.isEmpty()) {
-                comp.setState(stateCPActivePlatlabSource);
-            } else {
-                comp.setState(null);
-            }
-
-            String zipcodeCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.Zip9;
-            String zipcodeCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("zip")
-                    : null;
-
-            if (zipcodeCPActiveDTAPISource != null && !zipcodeCPActiveDTAPISource.isEmpty()) {
-                comp.setZipcode(zipcodeCPActiveDTAPISource);
-            } else if (zipcodeCPActivePlatlabSource != null && !zipcodeCPActivePlatlabSource.isEmpty()) {
-                comp.setZipcode(zipcodeCPActivePlatlabSource);
-            } else {
-                comp.setZipcode(null);
-            }
-
-            String countyCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.County;
-            String countyCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("county")
-                    : null;
-
-            if (countyCPActiveDTAPISource != null && !countyCPActiveDTAPISource.isEmpty()) {
-                comp.setCounty(countyCPActiveDTAPISource);
-            } else if (countyCPActivePlatlabSource != null && !countyCPActivePlatlabSource.isEmpty()) {
-                comp.setCounty(countyCPActivePlatlabSource);
-            } else {
-                comp.setCounty(null);
-            }
-
-            Double proximityCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Double) compActive.get("proximity")
-                    : null;
-
-            if (proximityCPActivePlatlabSource != null) {
-                comp.setProximity(proximityCPActivePlatlabSource);
-            } else {
-                comp.setProximity(null);
-            }
-
-            Integer salePriceCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("price")
-                    : null;
-
-            if (salePriceCPActivePlatlabSource != null && salePriceCPActivePlatlabSource != 0) {
-                comp.setSalePrice(salePriceCPActivePlatlabSource);
-            } else {
-                comp.setSalePrice(null);
-            }
-
-            comp.setPricePerSqFt(BigDecimal.valueOf(Double.valueOf((Integer) compActive.get("price")) / Double.parseDouble(String.valueOf((Integer) compActive.get("square_feet")))).setScale(2, RoundingMode.HALF_UP).doubleValue());
-
-            Integer originalListingPriceCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("original_listing_price")
-                    : null;
-
-            if (originalListingPriceCPClosedPlatlabSource != null && originalListingPriceCPClosedPlatlabSource != 0) {
-                comp.setOriginalListingPrice(originalListingPriceCPClosedPlatlabSource);
-            } else {
-                comp.setOriginalListingPrice(null);
-            }
-
-            Integer currentListingPriceCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("price")
-                    : null;
-
-            if (currentListingPriceCPClosedPlatlabSource != null && currentListingPriceCPClosedPlatlabSource != 0) {
-                comp.setCurrentListingPrice(currentListingPriceCPClosedPlatlabSource);
-            } else {
-                comp.setCurrentListingPrice(null);
-            }
-
-            String saleDateCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("sold_date")
-                    : null;
-
-            if (saleDateCPClosedPlatlabSource != null && !saleDateCPClosedPlatlabSource.isEmpty()) {
-                comp.setSaleDate(saleDateCPClosedPlatlabSource);
-            } else {
-                comp.setSaleDate(null);
-            }
-
-            String listDateCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("mls_list_date")
-                    : null;
-
-            if (listDateCPClosedPlatlabSource != null && !listDateCPClosedPlatlabSource.isEmpty()) {
-                comp.setListDate(listDateCPClosedPlatlabSource);
-            } else {
-                comp.setListDate(null);
-            }
-
-            Integer daysOnMarketCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("days_on_market")
-                    : null;
-
-            if (daysOnMarketCPClosedPlatlabSource != null) {
-                comp.setDaysOnMarket(daysOnMarketCPClosedPlatlabSource);
-            } else {
-                comp.setDaysOnMarket(null);
-            }
-
-            String mlsIDCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("display_mls_number")
-                    : null;
-
-            if (mlsIDCPClosedPlatlabSource != null) {
-                comp.setMlsID(mlsIDCPClosedPlatlabSource);
-            } else {
-                comp.setMlsID(null);
-            }
-
-            comp.setLocation(findLocationDensity(String.valueOf(compActive.get("longitude")), String.valueOf(compActive.get("latitude"))));
-
-            Double siteORLotSizeCPClosedDTAPISource = propertyDetailReportDataCP.SiteInformation.Acres;
-            Double siteORLotSizeCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Double) compActive.get("lot_size")
-                    : null;
-
-            if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
-                comp.setSiteOrLotSize(siteORLotSizeCPClosedDTAPISource);
-            } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
-                comp.setSiteOrLotSize(siteORLotSizeCPClosedPlatlabSource);
-            } else {
-                comp.setSiteOrLotSize(null);
-            }
-
-            Integer yearBuiltCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.YearBuilt;
-            Integer yearBuiltCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("year_built")
-                    : null;
-
-            if (yearBuiltCPClosedDTAPISource != null && yearBuiltCPClosedDTAPISource != 0) {
-                comp.setYearBuilt(yearBuiltCPClosedDTAPISource);
-            } else if (yearBuiltCPClosedPlatlabSource != null && yearBuiltCPClosedPlatlabSource != 0) {
-                comp.setYearBuilt(yearBuiltCPClosedPlatlabSource);
-            } else {
-                comp.setYearBuilt(null);
-            }
-
-            String styleCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Style;
-            String styleCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (String) compActive.get("style")
-                    : null;
-
-            if (styleCPClosedDTAPISource != null && !styleCPClosedDTAPISource.isEmpty()) {
-                comp.setStyle(styleCPClosedDTAPISource);
-            } else if (styleCPClosedPlatlabSource != null && !styleCPClosedPlatlabSource.isEmpty()) {
-                comp.setStyle(styleCPClosedPlatlabSource);
-            } else {
-                comp.setStyle(null);
-            }
-
-            Integer totalRoomsCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.TotalRooms;
-
-            if (totalRoomsCPActiveDTAPISource != null && totalRoomsCPActiveDTAPISource != 0) {
-                propertyInformation.setTotalRooms(totalRoomsCPActiveDTAPISource);
-            } else {
-                propertyInformation.setTotalRooms(null);
-            }
-
-            Integer bedroomsCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Bedrooms;
-            Integer bedroomsCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("bedrooms")
-                    : null;
-
-            if (bedroomsCPActiveDTAPISource != null && bedroomsCPActiveDTAPISource != 0) {
-                comp.setBedrooms(bedroomsCPActiveDTAPISource);
-            } else if (bedroomsCPActivePlatlabSource != null && bedroomsCPActivePlatlabSource != 0) {
-                comp.setBedrooms(bedroomsCPActivePlatlabSource);
-            } else {
-                comp.setBedrooms(null);
-            }
-
-            double bathroomsCPActiveDTAPISource;
-
-            int bathroomsFullCPActiveDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.FullBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.FullBath : 0;
-            int bathroomsHalfCPActiveDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.HalfBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.HalfBath : 0;
-
-            bathroomsCPActiveDTAPISource = bathroomsFullCPActiveDTAPISource + bathroomsHalfCPActiveDTAPISource / 2.0;
-
-            double bathroomsCPActivePlatlabSource;
-
-            int bathroomsCPActiveFullPlatlabSource = 0;
-            int bathroomsCPActiveHalfPlatlabSource = 0;
-
-            if (compActive != null && !compActive.isEmpty()) {
-                bathroomsCPActiveFullPlatlabSource = (compActive.get("bathrooms_full") != null) ? (int) compActive.get("bathrooms_full") : 0;
-                bathroomsCPActiveHalfPlatlabSource = (compActive.get("bathrooms_half") != null) ? (int) compActive.get("bathrooms_half") : 0;
-            }
-
-            bathroomsCPActivePlatlabSource = bathroomsCPActiveFullPlatlabSource + bathroomsCPActiveHalfPlatlabSource / 2.0;
-
-            if (bathroomsCPActiveDTAPISource != 0) {
-                comp.setBathrooms(bathroomsCPActiveDTAPISource);
-            } else if (bathroomsCPActivePlatlabSource != 0) {
-                comp.setBathrooms(bathroomsCPActivePlatlabSource);
-            } else {
-                comp.setBathrooms(null);
-            }
-
-            Integer basementAreaCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.BasementArea;
-            Boolean hasBasementCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Boolean) compActive.get("has_basement")
-                    : null;
-
-            if (hasBasementCPActivePlatlabSource != null) {
-                comp.setBasementAndFinish(hasBasementCPActivePlatlabSource ? "Yes" : "No");
-            } else if (basementAreaCPActiveDTAPISource != null) {
-                comp.setBasementAndFinish(basementAreaCPActiveDTAPISource > 0 ? "Yes" : "No");
-            } else {
-                comp.setBasementAndFinish("Unk.");
-            }
-
-            String heatTypeCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
-            if (heatTypeCPActiveDTAPISource != null && !heatTypeCPActiveDTAPISource.isEmpty()) {
-                comp.setHeating(heatTypeCPActiveDTAPISource);
-            } else {
-                comp.setHeating("Unk.");
-            }
-
-            String airConditioningCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.AirConditioning;
-            if (airConditioningCPActiveDTAPISource != null && !airConditioningCPActiveDTAPISource.isEmpty()) {
-                comp.setCooling(airConditioningCPActiveDTAPISource);
-            } else {
-                comp.setCooling("Unk.");
-            }
-
-            Integer garageSpacesCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.GarageCapacity;
-            Integer garageSpacesCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("garage_spaces")
-                    : null;
-
-            if (garageSpacesCPActiveDTAPISource != null) {
-                if (garageSpacesCPActiveDTAPISource == 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPActiveDTAPISource + " car");
-                } else if (garageSpacesCPActiveDTAPISource > 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPActiveDTAPISource + " cars");
-                } else {
-                    comp.setGarage("No Garage");
+                if (propertyDetailReportResponseComparableProperty == null) {
+                    System.out.println("issue with DT API, skip to the next property");
+                    continue;
                 }
-            } else if (garageSpacesCPActivePlatlabSource != null) {
-                if (garageSpacesCPActivePlatlabSource == 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPActivePlatlabSource + " car");
-                } else if (garageSpacesCPActivePlatlabSource > 1) {
-                    comp.setGarage("Garage - " + garageSpacesCPActivePlatlabSource + " cars");
+
+                System.out.println(propertyDetailReportResponseComparableProperty);
+
+                PropertyDetailReportData propertyDetailReportDataCP = propertyDetailReportResponseComparableProperty.Reports.get(0).Data;
+
+                System.out.println("propertyDetailReportDataCP call done");
+
+                ComparablePropertyInformation comp = new ComparablePropertyInformation();
+
+                String addressCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
+                String addressCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("address")
+                        : null;
+
+                if (addressCPActiveDTAPISource != null && !addressCPActiveDTAPISource.isEmpty()) {
+                    comp.setAddress(addressCPActiveDTAPISource);
+                } else if (addressCPActivePlatlabSource != null && !addressCPActivePlatlabSource.isEmpty()) {
+                    comp.setAddress(addressCPActivePlatlabSource);
                 } else {
-                    comp.setGarage("No Garage");
+                    comp.setAddress(null);
                 }
-            } else {
-                comp.setGarage(null);
-            }
 
-            Integer sqftCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.LivingArea;
-            Integer sqftCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
-                    ? (Integer) compActive.get("square_feet")
-                    : null;
+                String cityCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.City;
+                String cityCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("city")
+                        : null;
 
-            if (sqftCPActiveDTAPISource != null && sqftCPActiveDTAPISource != 0) {
-                comp.setGrossLivingArea(sqftCPActiveDTAPISource);
-            } else if (sqftCPActivePlatlabSource != null && sqftCPActivePlatlabSource != 0) {
-                comp.setGrossLivingArea(sqftCPActivePlatlabSource);
-            } else {
-                comp.setGrossLivingArea(null);
-            }
+                if (cityCPActiveDTAPISource != null && !cityCPActiveDTAPISource.isEmpty()) {
+                    comp.setCity(cityCPActiveDTAPISource);
+                } else if (cityCPActivePlatlabSource != null && !cityCPActivePlatlabSource.isEmpty()) {
+                    comp.setCity(cityCPActivePlatlabSource);
+                } else {
+                    comp.setCity(null);
+                }
 
-            activeComparablePropertyInformationList.add(comp);
+                String stateCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.State;
+                String stateCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("state")
+                        : null;
 
-            if (activeComparablePropertyInformationList.size() == 3) {
-                break;
+                if (stateCPActiveDTAPISource != null && !stateCPActiveDTAPISource.isEmpty()) {
+                    comp.setState(stateCPActiveDTAPISource);
+                } else if (stateCPActivePlatlabSource != null && !stateCPActivePlatlabSource.isEmpty()) {
+                    comp.setState(stateCPActivePlatlabSource);
+                } else {
+                    comp.setState(null);
+                }
+
+                String zipcodeCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.Zip9;
+                String zipcodeCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("zip")
+                        : null;
+
+                if (zipcodeCPActiveDTAPISource != null && !zipcodeCPActiveDTAPISource.isEmpty()) {
+                    comp.setZipcode(zipcodeCPActiveDTAPISource);
+                } else if (zipcodeCPActivePlatlabSource != null && !zipcodeCPActivePlatlabSource.isEmpty()) {
+                    comp.setZipcode(zipcodeCPActivePlatlabSource);
+                } else {
+                    comp.setZipcode(null);
+                }
+
+                String countyCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.County;
+                String countyCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("county")
+                        : null;
+
+                if (countyCPActiveDTAPISource != null && !countyCPActiveDTAPISource.isEmpty()) {
+                    comp.setCounty(countyCPActiveDTAPISource);
+                } else if (countyCPActivePlatlabSource != null && !countyCPActivePlatlabSource.isEmpty()) {
+                    comp.setCounty(countyCPActivePlatlabSource);
+                } else {
+                    comp.setCounty(null);
+                }
+
+                Double proximityCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Double) compActive.get("proximity")
+                        : null;
+
+                if (proximityCPActivePlatlabSource != null) {
+                    comp.setProximity(proximityCPActivePlatlabSource);
+                } else {
+                    comp.setProximity(null);
+                }
+
+                Integer salePriceCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("price")
+                        : null;
+
+                if (salePriceCPActivePlatlabSource != null && salePriceCPActivePlatlabSource != 0) {
+                    comp.setSalePrice(salePriceCPActivePlatlabSource);
+                } else {
+                    comp.setSalePrice(null);
+                }
+
+                comp.setPricePerSqFt(BigDecimal.valueOf(Double.valueOf((Integer) compActive.get("price")) / Double.parseDouble(String.valueOf((Integer) compActive.get("square_feet")))).setScale(2, RoundingMode.HALF_UP).doubleValue());
+
+                Integer originalListingPriceCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("original_listing_price")
+                        : null;
+
+                if (originalListingPriceCPClosedPlatlabSource != null && originalListingPriceCPClosedPlatlabSource != 0) {
+                    comp.setOriginalListingPrice(originalListingPriceCPClosedPlatlabSource);
+                } else {
+                    comp.setOriginalListingPrice(null);
+                }
+
+                Integer currentListingPriceCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("price")
+                        : null;
+
+                if (currentListingPriceCPClosedPlatlabSource != null && currentListingPriceCPClosedPlatlabSource != 0) {
+                    comp.setCurrentListingPrice(currentListingPriceCPClosedPlatlabSource);
+                } else {
+                    comp.setCurrentListingPrice(null);
+                }
+
+                String saleDateCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("sold_date")
+                        : null;
+
+                if (saleDateCPClosedPlatlabSource != null && !saleDateCPClosedPlatlabSource.isEmpty()) {
+                    comp.setSaleDate(saleDateCPClosedPlatlabSource);
+                } else {
+                    comp.setSaleDate(null);
+                }
+
+                String listDateCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("mls_list_date")
+                        : null;
+
+                if (listDateCPClosedPlatlabSource != null && !listDateCPClosedPlatlabSource.isEmpty()) {
+                    comp.setListDate(listDateCPClosedPlatlabSource);
+                } else {
+                    comp.setListDate(null);
+                }
+
+                Integer daysOnMarketCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("days_on_market")
+                        : null;
+
+                if (daysOnMarketCPClosedPlatlabSource != null) {
+                    comp.setDaysOnMarket(daysOnMarketCPClosedPlatlabSource);
+                } else {
+                    comp.setDaysOnMarket(null);
+                }
+
+                String mlsIDCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("display_mls_number")
+                        : null;
+
+                if (mlsIDCPClosedPlatlabSource != null) {
+                    comp.setMlsID(mlsIDCPClosedPlatlabSource);
+                } else {
+                    comp.setMlsID(null);
+                }
+
+                comp.setLocation(findLocationDensity(String.valueOf(compActive.get("longitude")), String.valueOf(compActive.get("latitude"))));
+
+                Double siteORLotSizeCPClosedDTAPISource = propertyDetailReportDataCP.SiteInformation.Acres;
+                Double siteORLotSizeCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Double) compActive.get("lot_size")
+                        : null;
+
+                if (siteORLotSizeCPClosedDTAPISource != null && siteORLotSizeCPClosedDTAPISource != 0.0) {
+                    comp.setSiteOrLotSize(siteORLotSizeCPClosedDTAPISource);
+                } else if (siteORLotSizeCPClosedPlatlabSource != null && siteORLotSizeCPClosedPlatlabSource != 0.0) {
+                    comp.setSiteOrLotSize(siteORLotSizeCPClosedPlatlabSource);
+                } else {
+                    comp.setSiteOrLotSize(null);
+                }
+
+                Integer yearBuiltCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.YearBuilt;
+                Integer yearBuiltCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("year_built")
+                        : null;
+
+                if (yearBuiltCPClosedDTAPISource != null && yearBuiltCPClosedDTAPISource != 0) {
+                    comp.setYearBuilt(yearBuiltCPClosedDTAPISource);
+                } else if (yearBuiltCPClosedPlatlabSource != null && yearBuiltCPClosedPlatlabSource != 0) {
+                    comp.setYearBuilt(yearBuiltCPClosedPlatlabSource);
+                } else {
+                    comp.setYearBuilt(null);
+                }
+
+                String styleCPClosedDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Style;
+                String styleCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (String) compActive.get("style")
+                        : null;
+
+                if (styleCPClosedDTAPISource != null && !styleCPClosedDTAPISource.isEmpty()) {
+                    comp.setStyle(styleCPClosedDTAPISource);
+                } else if (styleCPClosedPlatlabSource != null && !styleCPClosedPlatlabSource.isEmpty()) {
+                    comp.setStyle(styleCPClosedPlatlabSource);
+                } else {
+                    comp.setStyle(null);
+                }
+
+                Integer totalRoomsCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.TotalRooms;
+
+                if (totalRoomsCPActiveDTAPISource != null && totalRoomsCPActiveDTAPISource != 0) {
+                    propertyInformation.setTotalRooms(totalRoomsCPActiveDTAPISource);
+                } else {
+                    propertyInformation.setTotalRooms(null);
+                }
+
+                Integer bedroomsCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.Bedrooms;
+                Integer bedroomsCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("bedrooms")
+                        : null;
+
+                if (bedroomsCPActiveDTAPISource != null && bedroomsCPActiveDTAPISource != 0) {
+                    comp.setBedrooms(bedroomsCPActiveDTAPISource);
+                } else if (bedroomsCPActivePlatlabSource != null && bedroomsCPActivePlatlabSource != 0) {
+                    comp.setBedrooms(bedroomsCPActivePlatlabSource);
+                } else {
+                    comp.setBedrooms(null);
+                }
+
+                double bathroomsCPActiveDTAPISource;
+
+                int bathroomsFullCPActiveDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.FullBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.FullBath : 0;
+                int bathroomsHalfCPActiveDTAPISource = (propertyDetailReportDataCP.PropertyCharacteristics.HalfBath != null) ? propertyDetailReportDataCP.PropertyCharacteristics.HalfBath : 0;
+
+                bathroomsCPActiveDTAPISource = bathroomsFullCPActiveDTAPISource + bathroomsHalfCPActiveDTAPISource / 2.0;
+
+                double bathroomsCPActivePlatlabSource;
+
+                int bathroomsCPActiveFullPlatlabSource = 0;
+                int bathroomsCPActiveHalfPlatlabSource = 0;
+
+                if (compActive != null && !compActive.isEmpty()) {
+                    bathroomsCPActiveFullPlatlabSource = (compActive.get("bathrooms_full") != null) ? (int) compActive.get("bathrooms_full") : 0;
+                    bathroomsCPActiveHalfPlatlabSource = (compActive.get("bathrooms_half") != null) ? (int) compActive.get("bathrooms_half") : 0;
+                }
+
+                bathroomsCPActivePlatlabSource = bathroomsCPActiveFullPlatlabSource + bathroomsCPActiveHalfPlatlabSource / 2.0;
+
+                if (bathroomsCPActiveDTAPISource != 0) {
+                    comp.setBathrooms(bathroomsCPActiveDTAPISource);
+                } else if (bathroomsCPActivePlatlabSource != 0) {
+                    comp.setBathrooms(bathroomsCPActivePlatlabSource);
+                } else {
+                    comp.setBathrooms(null);
+                }
+
+                Integer basementAreaCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.BasementArea;
+                Boolean hasBasementCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Boolean) compActive.get("has_basement")
+                        : null;
+
+                if (hasBasementCPActivePlatlabSource != null) {
+                    comp.setBasementAndFinish(hasBasementCPActivePlatlabSource ? "Yes" : "No");
+                } else if (basementAreaCPActiveDTAPISource != null) {
+                    comp.setBasementAndFinish(basementAreaCPActiveDTAPISource > 0 ? "Yes" : "No");
+                } else {
+                    comp.setBasementAndFinish("Unk.");
+                }
+
+                String heatTypeCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.HeatType;
+                if (heatTypeCPActiveDTAPISource != null && !heatTypeCPActiveDTAPISource.isEmpty()) {
+                    comp.setHeating(heatTypeCPActiveDTAPISource);
+                } else {
+                    comp.setHeating("Unk.");
+                }
+
+                String airConditioningCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.AirConditioning;
+                if (airConditioningCPActiveDTAPISource != null && !airConditioningCPActiveDTAPISource.isEmpty()) {
+                    comp.setCooling(airConditioningCPActiveDTAPISource);
+                } else {
+                    comp.setCooling("Unk.");
+                }
+
+                Integer garageSpacesCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.GarageCapacity;
+                Integer garageSpacesCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("garage_spaces")
+                        : null;
+
+                if (garageSpacesCPActiveDTAPISource != null) {
+                    if (garageSpacesCPActiveDTAPISource == 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPActiveDTAPISource + " car");
+                    } else if (garageSpacesCPActiveDTAPISource > 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPActiveDTAPISource + " cars");
+                    } else {
+                        comp.setGarage("No Garage");
+                    }
+                } else if (garageSpacesCPActivePlatlabSource != null) {
+                    if (garageSpacesCPActivePlatlabSource == 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPActivePlatlabSource + " car");
+                    } else if (garageSpacesCPActivePlatlabSource > 1) {
+                        comp.setGarage("Garage - " + garageSpacesCPActivePlatlabSource + " cars");
+                    } else {
+                        comp.setGarage("No Garage");
+                    }
+                } else {
+                    comp.setGarage(null);
+                }
+
+                Integer sqftCPActiveDTAPISource = propertyDetailReportDataCP.PropertyCharacteristics.LivingArea;
+                Integer sqftCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
+                        ? (Integer) compActive.get("square_feet")
+                        : null;
+
+                if (sqftCPActiveDTAPISource != null && sqftCPActiveDTAPISource != 0) {
+                    comp.setGrossLivingArea(sqftCPActiveDTAPISource);
+                } else if (sqftCPActivePlatlabSource != null && sqftCPActivePlatlabSource != 0) {
+                    comp.setGrossLivingArea(sqftCPActivePlatlabSource);
+                } else {
+                    comp.setGrossLivingArea(null);
+                }
+
+                activeComparablePropertyInformationList.add(comp);
+
+                if (activeComparablePropertyInformationList.size() == 3) {
+                    break;
+                }
             }
         }
 
