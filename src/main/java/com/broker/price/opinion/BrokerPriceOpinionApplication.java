@@ -7,7 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class BrokerPriceOpinionApplication {
 
 	public static void main(String[] args) {
-		System.out.println("Hello World! I'm Broker Price Opinion Application!");
 		SpringApplication.run(BrokerPriceOpinionApplication.class, args);
 	}
 }

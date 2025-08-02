@@ -764,8 +764,6 @@ public class BrokerPriceOpinionPDFInfoService {
 
     public BrokerPriceOpinionPDFInfoDTO getBrokerPriceOpinionPDFInformation(String propertyID) {
 
-        System.out.println("FLOW CHECK - " + "start");
-
         BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO = new BrokerPriceOpinionPDFInfoDTO();
 
         brokerPriceOpinionPDFInfoDTO.setPropertyID(propertyID);
@@ -871,8 +869,6 @@ public class BrokerPriceOpinionPDFInfoService {
                 return rows;
             });
         }
-
-        System.out.println("FLOW CHECK - " + "target property info fetched");
 
         String statusPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
                 ? (String) targetPropertyInfoPlatlabResult.get(0).get("status")
@@ -1270,8 +1266,6 @@ public class BrokerPriceOpinionPDFInfoService {
 
         brokerPriceOpinionPDFInfoDTO.setNeighborhoodInformation(neighborhoodInformation);
 
-        System.out.println("FLOW CHECK - " + "target property information processed");
-
         PropertyDetailReportResponse propertyDetailReportResponseComparableProperty;
 
         List<ListingDTO> resultCompsListingsSearchClosed;
@@ -1283,8 +1277,6 @@ public class BrokerPriceOpinionPDFInfoService {
                 rs.getString("mlsid")
         ));
 
-        System.out.println("FLOW CHECK - " + "closed comps query 1 done");
-
         if (resultCompsListingsSearchClosed.size() < 3) {
 
             String queryCompsClosedPass2 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Closed", 2);
@@ -1294,8 +1286,6 @@ public class BrokerPriceOpinionPDFInfoService {
                     rs.getString("mlsid")
             ));
         }
-
-        System.out.println("FLOW CHECK - " + "closed comps query 2 done");
 
         if (resultCompsListingsSearchClosed.size() < 3) {
 
@@ -1307,8 +1297,6 @@ public class BrokerPriceOpinionPDFInfoService {
             ));
         }
 
-        System.out.println("FLOW CHECK - " + "closed comps query 3 done");
-
         if (resultCompsListingsSearchClosed.size() < 3) {
 
             String queryCompsClosedPass4 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Closed", 4);
@@ -1318,8 +1306,6 @@ public class BrokerPriceOpinionPDFInfoService {
                     rs.getString("mlsid")
             ));
         }
-
-        System.out.println("FLOW CHECK - " + "closed comps query 4 done");
 
         List<Map<String, Object>> resultCompsClosed = null;
 
@@ -1346,27 +1332,18 @@ public class BrokerPriceOpinionPDFInfoService {
             });
         }
 
-        System.out.println("FLOW CHECK - " + "closed comps trino server query done");
-
         List<ComparablePropertyInformation> closedComparablePropertyInformationList = new ArrayList<>();
 
         if (!closedComparablePropertyInformationList.isEmpty()) {
             for (Map<String, Object> compClosed : resultCompsClosed) {
 
-                System.out.println("propertyDetailReportDataCP call start");
-
                 propertyDetailReportResponseComparableProperty = getPropertyDetailReportByFullAddressDTAPI(compClosed.get("address") + ", " + compClosed.get("city") + ", " + compClosed.get("state") + " " + compClosed.get("zip") + ", United States");
 
                 if (propertyDetailReportResponseComparableProperty == null) {
-                    System.out.println("issue with DT API, skip to the next property");
                     continue;
                 }
 
-                System.out.println(propertyDetailReportResponseComparableProperty);
-
                 PropertyDetailReportData propertyDetailReportDataCP = propertyDetailReportResponseComparableProperty.Reports.get(0).Data;
-
-                System.out.println("propertyDetailReportDataCP call done");
 
                 ComparablePropertyInformation comp = new ComparablePropertyInformation();
 
@@ -1681,8 +1658,6 @@ public class BrokerPriceOpinionPDFInfoService {
 
         brokerPriceOpinionPDFInfoDTO.setClosedComparablePropertyInformationList(closedComparablePropertyInformationList);
 
-        System.out.println("FLOW CHECK - " + "closed comps processing done");
-
         List<ListingDTO> resultCompsListingsSearchActive;
 
         String queryCompsActivePass1 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Active", 1);
@@ -1691,8 +1666,6 @@ public class BrokerPriceOpinionPDFInfoService {
                 rs.getString("metro"),
                 rs.getString("mlsid")
         ));
-
-        System.out.println("FLOW CHECK - " + "active comps query 1 done");
 
         if (resultCompsListingsSearchActive.size() < 3) {
 
@@ -1704,8 +1677,6 @@ public class BrokerPriceOpinionPDFInfoService {
             ));
         }
 
-        System.out.println("FLOW CHECK - " + "active comps query 2 done");
-
         if (resultCompsListingsSearchActive.size() < 3) {
 
             String queryCompsActivePass3 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Active", 3);
@@ -1716,8 +1687,6 @@ public class BrokerPriceOpinionPDFInfoService {
             ));
         }
 
-        System.out.println("FLOW CHECK - " + "active comps query 3 done");
-
         if (resultCompsListingsSearchActive.size() < 3) {
 
             String queryCompsActivePass4 = compsListingsSearchQueryBuilder(propertyID, brokerPriceOpinionPDFInfoDTO, "Active", 4);
@@ -1727,8 +1696,6 @@ public class BrokerPriceOpinionPDFInfoService {
                     rs.getString("mlsid")
             ));
         }
-
-        System.out.println("FLOW CHECK - " + "active comps query 4 done");
 
         List<Map<String, Object>> resultCompsActive = null;
 
@@ -1755,27 +1722,18 @@ public class BrokerPriceOpinionPDFInfoService {
             });
         }
 
-        System.out.println("FLOW CHECK - " + "active comps trino server query done");
-
         List<ComparablePropertyInformation> activeComparablePropertyInformationList = new ArrayList<>();
 
         if (!activeComparablePropertyInformationList.isEmpty()) {
             for (Map<String, Object> compActive : resultCompsActive) {
 
-                System.out.println("propertyDetailReportDataCP call start");
-
                 propertyDetailReportResponseComparableProperty = getPropertyDetailReportByFullAddressDTAPI(compActive.get("address") + ", " + compActive.get("city") + ", " + compActive.get("state") + " " + compActive.get("zip") + ", United States");
 
                 if (propertyDetailReportResponseComparableProperty == null) {
-                    System.out.println("issue with DT API, skip to the next property");
                     continue;
                 }
 
-                System.out.println(propertyDetailReportResponseComparableProperty);
-
                 PropertyDetailReportData propertyDetailReportDataCP = propertyDetailReportResponseComparableProperty.Reports.get(0).Data;
-
-                System.out.println("propertyDetailReportDataCP call done");
 
                 ComparablePropertyInformation comp = new ComparablePropertyInformation();
 
@@ -2089,8 +2047,6 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         brokerPriceOpinionPDFInfoDTO.setActiveComparablePropertyInformationList(activeComparablePropertyInformationList);
-
-        System.out.println("FLOW CHECK - " + "active comps processing done");
 
         return brokerPriceOpinionPDFInfoDTO;
     }
