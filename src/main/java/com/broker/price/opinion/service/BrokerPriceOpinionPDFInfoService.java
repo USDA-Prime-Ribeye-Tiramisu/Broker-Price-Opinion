@@ -943,11 +943,14 @@ public class BrokerPriceOpinionPDFInfoService {
             orderInformation.setCounty(null);
         }
 
+        String parcelIDDTAPISource = propertyDetailReportData.SubjectProperty.SitusAddress.APN;
         String parcelIDPlatlabSource = targetPropertyInfoPlatlabResult != null && !targetPropertyInfoPlatlabResult.isEmpty()
                 ? (String) targetPropertyInfoPlatlabResult.get(0).get("parcel_number")
                 : null;
 
-        if (parcelIDPlatlabSource != null && !parcelIDPlatlabSource.isEmpty()) {
+        if (parcelIDDTAPISource != null && !parcelIDDTAPISource.isEmpty()) {
+            orderInformation.setParcelID(parcelIDDTAPISource);
+        } else if (parcelIDPlatlabSource != null && !parcelIDPlatlabSource.isEmpty()) {
             orderInformation.setParcelID(parcelIDPlatlabSource);
         } else {
             orderInformation.setParcelID(null);
