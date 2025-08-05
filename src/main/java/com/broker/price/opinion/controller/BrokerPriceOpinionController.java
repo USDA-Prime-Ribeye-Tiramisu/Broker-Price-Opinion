@@ -77,4 +77,14 @@ public class BrokerPriceOpinionController {
                                              @RequestBody() ComparablePropertyInformation comparablePropertyInformation) {
         brokerPriceOpinionPDFInfoService.updateBPOInformationComp(id, comp_number, status, comparablePropertyInformation);
     }
+
+    @CrossOrigin
+    @PostMapping("/bpo-comp-information")
+    public ComparablePropertyInformation getBPOComparablePropertyInformation(
+            @RequestParam("mls_id") String mls_id, @RequestParam("display_mls_number") String display_mls_number,
+            @RequestBody() BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+        return brokerPriceOpinionPDFInfoService.getBPOComparablePropertyInformation(
+                mls_id, display_mls_number, brokerPriceOpinionPDFInfoDTO
+        );
+    }
 }
