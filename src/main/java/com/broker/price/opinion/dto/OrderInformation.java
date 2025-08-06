@@ -12,6 +12,7 @@ public class OrderInformation {
 
     private String loanNumber;
     private String client;
+    private String name;
     private String orderFor;
     private String orderNumber;
     private String borrowerOrOwnerName;

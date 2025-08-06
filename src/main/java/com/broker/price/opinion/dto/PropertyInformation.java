@@ -47,4 +47,12 @@ public class PropertyInformation {
     private Double lotSize;
     private Double landValue;
     private Boolean isConformsToNeighborhood;
+
+    private String construction;
+    private String condition;
+    private String basementAndFinish;
+    private String heating;
+    private String cooling;
+    private String carport;
+    private String additionalAmenities;
 }
