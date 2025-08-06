@@ -29,4 +29,14 @@ public class BrokerPriceOpinionPDFInfoDTO {
     private NeighborhoodInformation neighborhoodInformation;
     private List<ComparablePropertyInformation> activeComparablePropertyInformationList;
     private List<ComparablePropertyInformation> closedComparablePropertyInformationList;
+    private CommentsMade commentsMade;
+    private PropertyValueEstimateAndReconciliation propertyValueEstimateAndReconciliation;
+
+    private Integer estimatedValue;
+
+    private String inspectionDate;
+
+    private String additionalCommentsAddendum;
+
+    private ImagesLinks imagesLinks;
 }
