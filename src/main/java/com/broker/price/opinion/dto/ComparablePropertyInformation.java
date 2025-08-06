@@ -12,6 +12,8 @@ public class ComparablePropertyInformation {
 
     private Integer compNumber;
     private String status;
+    private String compMLSId;
+    private String compDisplayMLSNumber;
     private String address;
     private String city;
     private String state;
