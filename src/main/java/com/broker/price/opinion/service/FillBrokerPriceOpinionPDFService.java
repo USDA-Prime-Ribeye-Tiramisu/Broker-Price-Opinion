@@ -1443,57 +1443,82 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.endText();
                 }
 
-                if (document.getNumberOfPages() >= 3) {
-                    PDPage page3 = document.getPage(2);
-                    float yTop = 425f;
-                    float yBottom = yTop - 220f - 30f;
+                float yTopImage = 425f;
+                float yBottomImage = yTopImage - 220f - 30f;
 
-                    // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yTop);
-                    // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yBottom);
-                }
+                // Page 2
 
-                if (document.getNumberOfPages() >= 4) {
-                    PDPage page4 = document.getPage(3);
-                    float yTop = 425f;
-                    float yBottom = yTop - 220f - 30f;
+                PDPage page2 = document.getPage(1);
+                fillBPOHeaderInformation(document, page2, brokerPriceOpinionPDFInfoDTO);
 
-                    // drawImageIfExists(document, page4, "/Users/vladyslav/Desktop/Deployment/image.png", yTop);
-                    drawImageIfExists(document, page4, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing1(), yBottom);
-                }
+                // Page 3
 
-                if (document.getNumberOfPages() >= 5) {
-                    PDPage page5 = document.getPage(4);
-                    float yTop = 425f;
-                    float yBottom = yTop - 220f - 30f;
+                PDPage page3 = document.getPage(2);
 
-                    drawImageIfExists(document, page5, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing2(), yTop);
-                    drawImageIfExists(document, page5, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing3(), yBottom);
-                }
+                // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+                // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yBottomImage);
 
-                if (document.getNumberOfPages() >= 6) {
-                    PDPage page6 = document.getPage(5);
-                    float yTop = 425f;
-                    float yBottom = yTop - 220f - 30f;
+                fillBPOHeaderInformation(document, page3, brokerPriceOpinionPDFInfoDTO);
 
-                    drawImageIfExists(document, page6, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing1(), yTop);
-                    drawImageIfExists(document, page6, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing2(), yBottom);
-                }
+                // Page 4
 
-                if (document.getNumberOfPages() >= 7) {
-                    PDPage page7 = document.getPage(6);
-                    float yTop = 425f;
-                    float yBottom = yTop - 220f - 30f;
+                PDPage page4 = document.getPage(3);
 
-                    drawImageIfExists(document, page7, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing3(), yTop);
-                    // drawImageIfExists(document, page7, "/Users/vladyslav/Desktop/Deployment/image.png", yBottom);
-                }
+                // drawImageIfExists(document, page4, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+                drawImageIfExists(document, page4, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing1(), yBottomImage);
 
-                if (document.getNumberOfPages() >= 8) {
-                    PDPage page8 = document.getPage(7);
-                    float yTop = 425f;
+                fillBPOHeaderInformation(document, page4, brokerPriceOpinionPDFInfoDTO);
 
-                    // drawImageIfExists(document, page8, "/Users/vladyslav/Desktop/Deployment/image.png", yTop);
-                }
+                // Page 5
+
+                PDPage page5 = document.getPage(4);
+
+                drawImageIfExists(document, page5, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing2(), yTopImage);
+                drawImageIfExists(document, page5, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing3(), yBottomImage);
+
+                fillBPOHeaderInformation(document, page5, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 6
+
+                PDPage page6 = document.getPage(5);
+
+                drawImageIfExists(document, page6, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing1(), yTopImage);
+                drawImageIfExists(document, page6, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing2(), yBottomImage);
+
+                fillBPOHeaderInformation(document, page6, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 7
+
+                PDPage page7 = document.getPage(6);
+
+                drawImageIfExists(document, page7, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing3(), yTopImage);
+                // drawImageIfExists(document, page7, "/Users/vladyslav/Desktop/Deployment/image.png", yBottomImage);
+
+                fillBPOHeaderInformation(document, page7, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 8
+
+                PDPage page8 = document.getPage(7);
+
+                // drawImageIfExists(document, page8, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+
+                fillBPOHeaderInformation(document, page8, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 9
+
+                PDPage page9 = document.getPage(8);
+
+                fillBPOHeaderInformation(document, page9, brokerPriceOpinionPDFInfoDTO);
+
+                fillProximitySection(document, page9, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 10
+
+                PDPage page10 = document.getPage(9);
+
+                fillBPOHeaderInformation(document, page10, brokerPriceOpinionPDFInfoDTO);
+
+                fillProximitySection(document, page10, brokerPriceOpinionPDFInfoDTO);
             }
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -1581,6 +1606,473 @@ public class FillBrokerPriceOpinionPDFService {
         } catch (IOException e) {
             System.err.println("Failed to process image: " + imagePath);
             e.printStackTrace();
+        }
+    }
+
+    private void fillBPOHeaderInformation(
+            PDDocument document, PDPage page, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+
+        try (PDPageContentStream contentStream3 = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(60, 710);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(252, 710);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(355, 710);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(60, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(230, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(318, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(359, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode().substring(0, 5));
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(411, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getName() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getName());
+            }
+
+            contentStream3.endText();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void fillProximitySection(PDDocument document, PDPage page, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+
+        try (PDPageContentStream contentStreamPage = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 227);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 211);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 195);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 179);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 164);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 148);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 243);
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 227);
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 211);
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 195);
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 179);
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 164);
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 148);
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
