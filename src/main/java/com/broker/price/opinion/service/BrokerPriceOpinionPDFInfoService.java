@@ -1607,6 +1607,26 @@ public class BrokerPriceOpinionPDFInfoService {
 
             ComparablePropertyInformation comp = new ComparablePropertyInformation();
 
+            String compMLSIdCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                    ? (String) compClosed.get("mls_id")
+                    : null;
+
+            if (compMLSIdCPClosedPlatlabSource != null && !compMLSIdCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompMLSId(compMLSIdCPClosedPlatlabSource);
+            } else {
+                comp.setCompMLSId(null);
+            }
+
+            String compDisplayMLSNumberCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                    ? (String) compClosed.get("display_mls_number")
+                    : null;
+
+            if (compDisplayMLSNumberCPClosedPlatlabSource != null && !compDisplayMLSNumberCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompDisplayMLSNumber(compDisplayMLSNumberCPClosedPlatlabSource);
+            } else {
+                comp.setCompDisplayMLSNumber(null);
+            }
+
             String addressCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
             String addressCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
                     ? (String) compClosed.get("address")
@@ -1994,6 +2014,26 @@ public class BrokerPriceOpinionPDFInfoService {
             PropertyDetailReportData propertyDetailReportDataCP = propertyDetailReportResponseComparableProperty.Reports.get(0).Data;
 
             ComparablePropertyInformation comp = new ComparablePropertyInformation();
+
+            String compMLSIdCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                    ? (String) compActive.get("mls_id")
+                    : null;
+
+            if (compMLSIdCPClosedPlatlabSource != null && !compMLSIdCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompMLSId(compMLSIdCPClosedPlatlabSource);
+            } else {
+                comp.setCompMLSId(null);
+            }
+
+            String compDisplayMLSNumberCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                    ? (String) compActive.get("display_mls_number")
+                    : null;
+
+            if (compDisplayMLSNumberCPClosedPlatlabSource != null && !compDisplayMLSNumberCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompDisplayMLSNumber(compDisplayMLSNumberCPClosedPlatlabSource);
+            } else {
+                comp.setCompDisplayMLSNumber(null);
+            }
 
             String addressCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
             String addressCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
