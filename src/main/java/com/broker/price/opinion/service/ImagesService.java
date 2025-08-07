@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -82,9 +83,18 @@ public class ImagesService {
                 "WHERE mls_id = ? AND mls_listing_id = ? " +
                 "ORDER BY sequence_number LIMIT 1";
 
-        String sourceURL = trinoJdbcTemplate.queryForObject(sql, String.class, mls_id, display_mls_number);
+        String sourceURL = null;
 
-        assert sourceURL != null;
+        try {
+            sourceURL = trinoJdbcTemplate.queryForObject(sql, String.class, mls_id, display_mls_number);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+
+        if (sourceURL == null) {
+            return null;
+        }
+
         String filenameWithoutExtension = sourceURL.substring(sourceURL.lastIndexOf('/') + 1, sourceURL.lastIndexOf('.'));
 
         String prefix = "images-all/" + mls_id + "/" + display_mls_number;
