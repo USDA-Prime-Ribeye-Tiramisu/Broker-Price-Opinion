@@ -2936,6 +2936,8 @@ public class BrokerPriceOpinionPDFInfoService {
         StringBuilder query = new StringBuilder();
 
         query.append("SELECT ")
+                .append("lc.mls_id, ")
+                .append("lc.display_mls_number, ")
                 .append("lc.address, ")
                 .append("lc.city, ")
                 .append("lc.state, ")
