@@ -1,4 +1,11 @@
 -------------------------------------------------------------------------------
 Test set: com.broker.price.opinion.BrokerPriceOpinionApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.307 s - in com.broker.price.opinion.BrokerPriceOpinionApplicationTests
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 3.68 s <<< FAILURE! - in com.broker.price.opinion.BrokerPriceOpinionApplicationTests
+contextLoads  Time elapsed: 0.001 s  <<< ERROR!
+java.lang.IllegalStateException: Failed to load ApplicationContext
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'brokerPriceOpinionController': Unsatisfied dependency expressed through field 'brokerPriceOpinionPDFInfoService'; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'brokerPriceOpinionPDFInfoService': Unsatisfied dependency expressed through field 'imagesService'; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'imagesService': Injection of autowired dependencies failed; nested exception is java.lang.IllegalArgumentException: Could not resolve placeholder 'AWS_ACCESS_KEY' in value "${AWS_ACCESS_KEY}"
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'brokerPriceOpinionPDFInfoService': Unsatisfied dependency expressed through field 'imagesService'; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'imagesService': Injection of autowired dependencies failed; nested exception is java.lang.IllegalArgumentException: Could not resolve placeholder 'AWS_ACCESS_KEY' in value "${AWS_ACCESS_KEY}"
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'imagesService': Injection of autowired dependencies failed; nested exception is java.lang.IllegalArgumentException: Could not resolve placeholder 'AWS_ACCESS_KEY' in value "${AWS_ACCESS_KEY}"
+Caused by: java.lang.IllegalArgumentException: Could not resolve placeholder 'AWS_ACCESS_KEY' in value "${AWS_ACCESS_KEY}"
+

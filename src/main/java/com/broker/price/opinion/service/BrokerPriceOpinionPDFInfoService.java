@@ -55,6 +55,9 @@ public class BrokerPriceOpinionPDFInfoService {
         this.prodBackupJdbcTemplate = prodBackupJdbcTemplate;
     }
 
+    @Autowired
+    private ImagesService imagesService;
+
     public Integer generateBPOInformationRequest(String propertyID) {
 
         String sql = "INSERT INTO firstamerican.broker_price_opinion_pdf_info " +
@@ -1607,6 +1610,26 @@ public class BrokerPriceOpinionPDFInfoService {
 
             ComparablePropertyInformation comp = new ComparablePropertyInformation();
 
+            String compMLSIdCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                    ? (String) compClosed.get("mls_id")
+                    : null;
+
+            if (compMLSIdCPClosedPlatlabSource != null && !compMLSIdCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompMLSId(compMLSIdCPClosedPlatlabSource);
+            } else {
+                comp.setCompMLSId(null);
+            }
+
+            String compDisplayMLSNumberCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
+                    ? (String) compClosed.get("display_mls_number")
+                    : null;
+
+            if (compDisplayMLSNumberCPClosedPlatlabSource != null && !compDisplayMLSNumberCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompDisplayMLSNumber(compDisplayMLSNumberCPClosedPlatlabSource);
+            } else {
+                comp.setCompDisplayMLSNumber(null);
+            }
+
             String addressCPClosedDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
             String addressCPClosedPlatlabSource = compClosed != null && !compClosed.isEmpty()
                     ? (String) compClosed.get("address")
@@ -1995,6 +2018,26 @@ public class BrokerPriceOpinionPDFInfoService {
 
             ComparablePropertyInformation comp = new ComparablePropertyInformation();
 
+            String compMLSIdCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                    ? (String) compActive.get("mls_id")
+                    : null;
+
+            if (compMLSIdCPClosedPlatlabSource != null && !compMLSIdCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompMLSId(compMLSIdCPClosedPlatlabSource);
+            } else {
+                comp.setCompMLSId(null);
+            }
+
+            String compDisplayMLSNumberCPClosedPlatlabSource = compActive != null && !compActive.isEmpty()
+                    ? (String) compActive.get("display_mls_number")
+                    : null;
+
+            if (compDisplayMLSNumberCPClosedPlatlabSource != null && !compDisplayMLSNumberCPClosedPlatlabSource.isEmpty()) {
+                comp.setCompDisplayMLSNumber(compDisplayMLSNumberCPClosedPlatlabSource);
+            } else {
+                comp.setCompDisplayMLSNumber(null);
+            }
+
             String addressCPActiveDTAPISource = propertyDetailReportDataCP.SubjectProperty.SitusAddress.StreetAddress;
             String addressCPActivePlatlabSource = compActive != null && !compActive.isEmpty()
                     ? (String) compActive.get("address")
@@ -2314,6 +2357,14 @@ public class BrokerPriceOpinionPDFInfoService {
         brokerPriceOpinionPDFInfoDTO.setPropertyValueEstimateAndReconciliation(propertyValueEstimateAndReconciliation);
 
         ImagesLinks imagesLinks = new ImagesLinks();
+
+        imagesLinks.setClosedListing1(imagesService.getFirstImagePlatlabTrinoServerANDPlatlabAWSS3(activeComparablePropertyInformationList.get(0).getCompMLSId(), activeComparablePropertyInformationList.get(0).getCompDisplayMLSNumber()));
+        imagesLinks.setClosedListing2(imagesService.getFirstImagePlatlabTrinoServerANDPlatlabAWSS3(activeComparablePropertyInformationList.get(1).getCompMLSId(), activeComparablePropertyInformationList.get(1).getCompDisplayMLSNumber()));
+        imagesLinks.setClosedListing3(imagesService.getFirstImagePlatlabTrinoServerANDPlatlabAWSS3(activeComparablePropertyInformationList.get(2).getCompMLSId(), activeComparablePropertyInformationList.get(2).getCompDisplayMLSNumber()));
+
+        imagesLinks.setActiveListing1(imagesService.getFirstImagePlatlabTrinoServerANDPlatlabAWSS3(closedComparablePropertyInformationList.get(0).getCompMLSId(), activeComparablePropertyInformationList.get(0).getCompDisplayMLSNumber()));
+        imagesLinks.setActiveListing2(imagesService.getFirstImagePlatlabTrinoServerANDPlatlabAWSS3(closedComparablePropertyInformationList.get(1).getCompMLSId(), activeComparablePropertyInformationList.get(1).getCompDisplayMLSNumber()));
+        imagesLinks.setActiveListing3(imagesService.getFirstImagePlatlabTrinoServerANDPlatlabAWSS3(closedComparablePropertyInformationList.get(2).getCompMLSId(), activeComparablePropertyInformationList.get(2).getCompDisplayMLSNumber()));
 
         brokerPriceOpinionPDFInfoDTO.setImagesLinks(imagesLinks);
 
