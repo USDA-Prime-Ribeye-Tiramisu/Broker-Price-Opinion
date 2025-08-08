@@ -18,16 +18,17 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+
+import javax.imageio.ImageIO;
 import java.awt.*;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -1442,215 +1443,82 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.endText();
                 }
 
-//                if (document.getNumberOfPages() >= 3) {
-//
-//                    PDPage page3 = document.getPage(2);
-//
-//                    File imageFile1 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage1 = PDImageXObject.createFromFileByExtension(imageFile1, document);
-//
-//                    File imageFile2 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage2 = PDImageXObject.createFromFileByExtension(imageFile2, document);
-//
-//                    try (PDPageContentStream imageContentStream = new PDPageContentStream(
-//                            document, page3, PDPageContentStream.AppendMode.APPEND, true, true)) {
-//
-//                        float maxHeight = 220f;
-//
-//                        float pageWidth = page3.getMediaBox().getWidth();
-//
-//                        int image1Width = pdImage1.getWidth();
-//                        int image1Height = pdImage1.getHeight();
-//                        float scale1 = maxHeight / image1Height;
-//                        float scaledWidth1 = image1Width * scale1;
-//                        float x1 = (pageWidth - scaledWidth1) / 2;
-//                        float y1 = 425f;
-//
-//                        imageContentStream.drawImage(pdImage1, x1, y1, scaledWidth1, maxHeight);
-//
-//                        int image2Width = pdImage2.getWidth();
-//                        int image2Height = pdImage2.getHeight();
-//                        float scale2 = maxHeight / image2Height;
-//                        float scaledWidth2 = image2Width * scale2;
-//                        float x2 = (pageWidth - scaledWidth2) / 2;
-//                        float y2 = y1 - maxHeight - 30f;
-//
-//                        imageContentStream.drawImage(pdImage2, x2, y2, scaledWidth2, maxHeight);
-//                    }
-//                }
-//
-//                if (document.getNumberOfPages() >= 4) {
-//
-//                    PDPage page4 = document.getPage(3);
-//
-//                    File imageFile3 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage3 = PDImageXObject.createFromFileByExtension(imageFile3, document);
-//
-//                    File imageFile4 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage4 = PDImageXObject.createFromFileByExtension(imageFile4, document);
-//
-//                    try (PDPageContentStream imageContentStream = new PDPageContentStream(
-//                            document, page4, PDPageContentStream.AppendMode.APPEND, true, true)) {
-//
-//                        float maxHeight = 220f;
-//
-//                        float pageWidth = page4.getMediaBox().getWidth();
-//
-//                        int image3Width = pdImage3.getWidth();
-//                        int image3Height = pdImage3.getHeight();
-//                        float scale3 = maxHeight / image3Height;
-//                        float scaledWidth3 = image3Width * scale3;
-//                        float x1 = (pageWidth - scaledWidth3) / 2;
-//                        float y1 = 425f;
-//
-//                        imageContentStream.drawImage(pdImage3, x1, y1, scaledWidth3, maxHeight);
-//
-//                        int image4Width = pdImage4.getWidth();
-//                        int image4Height = pdImage4.getHeight();
-//                        float scale4 = maxHeight / image4Height;
-//                        float scaledWidth4 = image4Width * scale4;
-//                        float x2 = (pageWidth - scaledWidth4) / 2;
-//                        float y2 = y1 - maxHeight - 30f;
-//
-//                        imageContentStream.drawImage(pdImage4, x2, y2, scaledWidth4, maxHeight);
-//                    }
-//                }
-//
-//                if (document.getNumberOfPages() >= 5) {
-//
-//                    PDPage page5 = document.getPage(4);
-//
-//                    File imageFile5 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage5 = PDImageXObject.createFromFileByExtension(imageFile5, document);
-//
-//                    File imageFile6 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage6 = PDImageXObject.createFromFileByExtension(imageFile6, document);
-//
-//                    try (PDPageContentStream imageContentStream = new PDPageContentStream(
-//                            document, page5, PDPageContentStream.AppendMode.APPEND, true, true)) {
-//
-//                        float maxHeight = 220f;
-//
-//                        float pageWidth = page5.getMediaBox().getWidth();
-//
-//                        int image5Width = pdImage5.getWidth();
-//                        int image5Height = pdImage5.getHeight();
-//                        float scale5 = maxHeight / image5Height;
-//                        float scaledWidth5 = image5Width * scale5;
-//                        float x1 = (pageWidth - scaledWidth5) / 2;
-//                        float y1 = 425f;
-//
-//                        imageContentStream.drawImage(pdImage5, x1, y1, scaledWidth5, maxHeight);
-//
-//                        int image6Width = pdImage6.getWidth();
-//                        int image6Height = pdImage6.getHeight();
-//                        float scale6 = maxHeight / image6Height;
-//                        float scaledWidth6 = image6Width * scale6;
-//                        float x2 = (pageWidth - scaledWidth6) / 2;
-//                        float y2 = y1 - maxHeight - 30f;
-//
-//                        imageContentStream.drawImage(pdImage6, x2, y2, scaledWidth6, maxHeight);
-//                    }
-//                }
-//
-//                if (document.getNumberOfPages() >= 6) {
-//
-//                    PDPage page6 = document.getPage(5);
-//
-//                    File imageFile7 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage7 = PDImageXObject.createFromFileByExtension(imageFile7, document);
-//
-//                    File imageFile8 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage8 = PDImageXObject.createFromFileByExtension(imageFile8, document);
-//
-//                    try (PDPageContentStream imageContentStream = new PDPageContentStream(
-//                            document, page6, PDPageContentStream.AppendMode.APPEND, true, true)) {
-//
-//                        float maxHeight = 220f;
-//
-//                        float pageWidth = page6.getMediaBox().getWidth();
-//
-//                        int image7Width = pdImage7.getWidth();
-//                        int image7Height = pdImage7.getHeight();
-//                        float scale7 = maxHeight / image7Height;
-//                        float scaledWidth7 = image7Width * scale7;
-//                        float x1 = (pageWidth - scaledWidth7) / 2;
-//                        float y1 = 425f;
-//
-//                        imageContentStream.drawImage(pdImage7, x1, y1, scaledWidth7, maxHeight);
-//
-//                        int image8Width = pdImage8.getWidth();
-//                        int image8Height = pdImage8.getHeight();
-//                        float scale8 = maxHeight / image8Height;
-//                        float scaledWidth8 = image8Width * scale8;
-//                        float x2 = (pageWidth - scaledWidth8) / 2;
-//                        float y2 = y1 - maxHeight - 30f;
-//
-//                        imageContentStream.drawImage(pdImage8, x2, y2, scaledWidth8, maxHeight);
-//                    }
-//                }
-//
-//                if (document.getNumberOfPages() >= 7) {
-//
-//                    PDPage page7 = document.getPage(6);
-//
-//                    File imageFile9 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage9 = PDImageXObject.createFromFileByExtension(imageFile9, document);
-//
-//                    File imageFile10 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage10 = PDImageXObject.createFromFileByExtension(imageFile10, document);
-//
-//                    try (PDPageContentStream imageContentStream = new PDPageContentStream(
-//                            document, page7, PDPageContentStream.AppendMode.APPEND, true, true)) {
-//
-//                        float maxHeight = 220f;
-//
-//                        float pageWidth = page7.getMediaBox().getWidth();
-//
-//                        int image9Width = pdImage9.getWidth();
-//                        int image9Height = pdImage9.getHeight();
-//                        float scale9 = maxHeight / image9Height;
-//                        float scaledWidth9 = image9Width * scale9;
-//                        float x1 = (pageWidth - scaledWidth9) / 2;
-//                        float y1 = 425f;
-//
-//                        imageContentStream.drawImage(pdImage9, x1, y1, scaledWidth9, maxHeight);
-//
-//                        int image10Width = pdImage10.getWidth();
-//                        int image10Height = pdImage10.getHeight();
-//                        float scale10 = maxHeight / image10Height;
-//                        float scaledWidth10 = image10Width * scale10;
-//                        float x2 = (pageWidth - scaledWidth10) / 2;
-//                        float y2 = y1 - maxHeight - 30f;
-//
-//                        imageContentStream.drawImage(pdImage10, x2, y2, scaledWidth10, maxHeight);
-//                    }
-//                }
-//
-//                if (document.getNumberOfPages() >= 8) {
-//
-//                    PDPage page8 = document.getPage(7);
-//
-//                    File imageFile11 = new File("/Users/vladyslav/Desktop/Deployment/image.png");
-//                    PDImageXObject pdImage11 = PDImageXObject.createFromFileByExtension(imageFile11, document);
-//
-//                    try (PDPageContentStream imageContentStream = new PDPageContentStream(
-//                            document, page8, PDPageContentStream.AppendMode.APPEND, true, true)) {
-//
-//                        float maxHeight = 220f;
-//
-//                        float pageWidth = page8.getMediaBox().getWidth();
-//
-//                        int image11Width = pdImage11.getWidth();
-//                        int image11Height = pdImage11.getHeight();
-//                        float scale11 = maxHeight / image11Height;
-//                        float scaledWidth11 = image11Width * scale11;
-//                        float x1 = (pageWidth - scaledWidth11) / 2;
-//                        float y1 = 425f;
-//
-//                        imageContentStream.drawImage(pdImage11, x1, y1, scaledWidth11, maxHeight);
-//                    }
-//                }
+                float yTopImage = 425f;
+                float yBottomImage = yTopImage - 220f - 30f;
+
+                // Page 2
+
+                PDPage page2 = document.getPage(1);
+                fillBPOHeaderInformation(document, page2, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 3
+
+                PDPage page3 = document.getPage(2);
+
+                // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+                // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yBottomImage);
+
+                fillBPOHeaderInformation(document, page3, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 4
+
+                PDPage page4 = document.getPage(3);
+
+                // drawImageIfExists(document, page4, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+                drawImageIfExists(document, page4, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing1(), yBottomImage);
+
+                fillBPOHeaderInformation(document, page4, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 5
+
+                PDPage page5 = document.getPage(4);
+
+                drawImageIfExists(document, page5, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing2(), yTopImage);
+                drawImageIfExists(document, page5, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing3(), yBottomImage);
+
+                fillBPOHeaderInformation(document, page5, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 6
+
+                PDPage page6 = document.getPage(5);
+
+                drawImageIfExists(document, page6, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing1(), yTopImage);
+                drawImageIfExists(document, page6, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing2(), yBottomImage);
+
+                fillBPOHeaderInformation(document, page6, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 7
+
+                PDPage page7 = document.getPage(6);
+
+                drawImageIfExists(document, page7, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing3(), yTopImage);
+                // drawImageIfExists(document, page7, "/Users/vladyslav/Desktop/Deployment/image.png", yBottomImage);
+
+                fillBPOHeaderInformation(document, page7, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 8
+
+                PDPage page8 = document.getPage(7);
+
+                // drawImageIfExists(document, page8, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+
+                fillBPOHeaderInformation(document, page8, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 9
+
+                PDPage page9 = document.getPage(8);
+
+                fillBPOHeaderInformation(document, page9, brokerPriceOpinionPDFInfoDTO);
+
+                fillProximitySection(document, page9, brokerPriceOpinionPDFInfoDTO);
+
+                // Page 10
+
+                PDPage page10 = document.getPage(9);
+
+                fillBPOHeaderInformation(document, page10, brokerPriceOpinionPDFInfoDTO);
+
+                fillProximitySection(document, page10, brokerPriceOpinionPDFInfoDTO);
             }
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -1678,6 +1546,533 @@ public class FillBrokerPriceOpinionPDFService {
             }
 
             return convertedURL;
+        }
+    }
+
+    private void drawImageIfExists(PDDocument document, PDPage page, String imagePath, float yPosition) throws IOException {
+
+        if (imagePath == null || imagePath.isEmpty()) {
+            return;
+        }
+
+        BufferedImage originalImage;
+
+        try {
+            if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+                try (InputStream in = new URL(imagePath).openStream()) {
+                    originalImage = ImageIO.read(in);
+                    if (originalImage == null) {
+                        System.err.println("Could not read image from URL: " + imagePath);
+                        return;
+                    }
+                }
+            } else {
+                File imageFile = new File(imagePath);
+                if (!imageFile.exists()) {
+                    System.err.println("Image file not found: " + imagePath);
+                    return;
+                }
+                originalImage = ImageIO.read(imageFile);
+                if (originalImage == null) {
+                    System.err.println("Could not read local image: " + imagePath);
+                    return;
+                }
+            }
+
+            // Convert to JPEG-compatible format (RGB, strips alpha)
+            BufferedImage rgbImage = new BufferedImage(
+                    originalImage.getWidth(),
+                    originalImage.getHeight(),
+                    BufferedImage.TYPE_INT_RGB
+            );
+            Graphics2D g = rgbImage.createGraphics();
+            g.setBackground(Color.WHITE);
+            g.clearRect(0, 0, rgbImage.getWidth(), rgbImage.getHeight());
+            g.drawImage(originalImage, 0, 0, null);
+            g.dispose();
+
+            PDImageXObject image = LosslessFactory.createFromImage(document, rgbImage);
+
+            float maxHeight = 220f;
+            float scale = maxHeight / image.getHeight();
+            float scaledWidth = image.getWidth() * scale;
+            float pageWidth = page.getMediaBox().getWidth();
+            float x = (pageWidth - scaledWidth) / 2;
+
+            try (PDPageContentStream cs = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+                cs.drawImage(image, x, yPosition, scaledWidth, maxHeight);
+            }
+
+        } catch (IOException e) {
+            System.err.println("Failed to process image: " + imagePath);
+            e.printStackTrace();
+        }
+    }
+
+    private void fillBPOHeaderInformation(
+            PDDocument document, PDPage page, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+
+        try (PDPageContentStream contentStream3 = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(60, 710);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(252, 710);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(355, 710);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(60, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(230, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(318, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState());
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(359, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode().substring(0, 5));
+            }
+
+            contentStream3.endText();
+
+            contentStream3.setFont(PDType1Font.HELVETICA, 10);
+            contentStream3.setNonStrokingColor(Color.BLACK);
+            contentStream3.beginText();
+
+            contentStream3.newLineAtOffset(411, 683);
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getName() == null) {
+                contentStream3.showText("");
+            } else {
+                contentStream3.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getName());
+            }
+
+            contentStream3.endText();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void fillProximitySection(PDDocument document, PDPage page, BrokerPriceOpinionPDFInfoDTO brokerPriceOpinionPDFInfoDTO) {
+
+        try (PDPageContentStream contentStreamPage = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 227);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 211);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 195);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 179);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 164);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(110, 148);
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getProximity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getProximity()));
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 243);
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 227);
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(0).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 211);
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(1).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 195);
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getActiveComparablePropertyInformationList().get(2).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 179);
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(0).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 164);
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(1).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+            contentStreamPage.setFont(PDType1Font.HELVETICA, 10);
+            contentStreamPage.setNonStrokingColor(Color.BLACK);
+            contentStreamPage.beginText();
+
+            contentStreamPage.newLineAtOffset(235, 148);
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getAddress() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getAddress());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getCity() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getCity());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getState() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getState());
+            }
+
+            contentStreamPage.showText(", ");
+
+            if (brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getZipcode() == null) {
+                contentStreamPage.showText("");
+            } else {
+                contentStreamPage.showText(brokerPriceOpinionPDFInfoDTO.getClosedComparablePropertyInformationList().get(2).getZipcode());
+            }
+
+            contentStreamPage.endText();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
