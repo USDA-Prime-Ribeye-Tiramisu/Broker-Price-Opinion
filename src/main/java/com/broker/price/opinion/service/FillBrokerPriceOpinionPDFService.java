@@ -1455,8 +1455,8 @@ public class FillBrokerPriceOpinionPDFService {
 
                 PDPage page3 = document.getPage(2);
 
-                // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
-                // drawImageIfExists(document, page3, "/Users/vladyslav/Desktop/Deployment/image.png", yBottomImage);
+                drawImageIfExists(document, page3, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getFrontOfSubjectProperty(), yTopImage);
+                drawImageIfExists(document, page3, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getStreetScene(), yBottomImage);
 
                 fillBPOHeaderInformation(document, page3, brokerPriceOpinionPDFInfoDTO);
 
@@ -1464,7 +1464,7 @@ public class FillBrokerPriceOpinionPDFService {
 
                 PDPage page4 = document.getPage(3);
 
-                // drawImageIfExists(document, page4, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+                drawImageIfExists(document, page4, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getAddressVerification(), yTopImage);
                 drawImageIfExists(document, page4, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getActiveListing1(), yBottomImage);
 
                 fillBPOHeaderInformation(document, page4, brokerPriceOpinionPDFInfoDTO);
@@ -1492,7 +1492,7 @@ public class FillBrokerPriceOpinionPDFService {
                 PDPage page7 = document.getPage(6);
 
                 drawImageIfExists(document, page7, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getClosedListing3(), yTopImage);
-                // drawImageIfExists(document, page7, "/Users/vladyslav/Desktop/Deployment/image.png", yBottomImage);
+                drawImageIfExists(document, page7, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getFrontSide(), yBottomImage);
 
                 fillBPOHeaderInformation(document, page7, brokerPriceOpinionPDFInfoDTO);
 
@@ -1500,7 +1500,7 @@ public class FillBrokerPriceOpinionPDFService {
 
                 PDPage page8 = document.getPage(7);
 
-                // drawImageIfExists(document, page8, "/Users/vladyslav/Desktop/Deployment/image.png", yTopImage);
+                drawImageIfExists(document, page8, brokerPriceOpinionPDFInfoDTO.getImagesLinks().getStreetScene2(), yTopImage);
 
                 fillBPOHeaderInformation(document, page8, brokerPriceOpinionPDFInfoDTO);
 
