@@ -63,6 +63,49 @@ public class FillBrokerPriceOpinionPDFService {
 
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
 
+                // Section. Order Information
+
+                contentStream.setFont(PDType1Font.HELVETICA, 6);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(43, 704);
+                if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getLoanNumber());
+                }
+
+                contentStream.newLineAtOffset(93, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getClient());
+                }
+
+                contentStream.newLineAtOffset(122, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderFor() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderFor());
+                }
+
+                contentStream.newLineAtOffset(107, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getOrderNumber());
+                }
+
+                contentStream.newLineAtOffset(90, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getBorrowerOrOwnerName() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getBorrowerOrOwnerName());
+                }
+
+                contentStream.endText();
+
                 contentStream.setFont(PDType1Font.HELVETICA, 6);
                 contentStream.setNonStrokingColor(Color.BLACK);
                 contentStream.beginText();
@@ -109,7 +152,16 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getParcelID());
                 }
 
+                contentStream.newLineAtOffset(74, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getOrderInformation().getFeeSimpleORLeasehold() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getOrderInformation().getFeeSimpleORLeasehold());
+                }
+
                 contentStream.endText();
+
+                // Section. Property Information
 
                 contentStream.setFont(PDType1Font.HELVETICA, 6);
                 contentStream.setNonStrokingColor(Color.BLACK);
@@ -245,11 +297,19 @@ public class FillBrokerPriceOpinionPDFService {
 
                 // Current Rent
                 contentStream.newLineAtOffset(153, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCurrentRent() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCurrentRent()));
+                }
 
                 // Market Rent
                 contentStream.newLineAtOffset(68, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getMarketRent() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getMarketRent()));
+                }
 
                 contentStream.endText();
 
@@ -267,7 +327,11 @@ public class FillBrokerPriceOpinionPDFService {
 
                 // Listed in Past 12 months
                 contentStream.newLineAtOffset(35, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsListedInPast12Months() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsListedInPast12Months());
+                }
 
                 contentStream.newLineAtOffset(59, 0);
                 if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getListPrice() == null) {
@@ -292,7 +356,11 @@ public class FillBrokerPriceOpinionPDFService {
 
                 // Transferred in Past 12 months
                 contentStream.newLineAtOffset(58, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsTransferredInPast12Months() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsTransferredInPast12Months());
+                }
 
                 contentStream.newLineAtOffset(90, 0);
                 if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getPriorSaleDate() == null) {
@@ -323,15 +391,27 @@ public class FillBrokerPriceOpinionPDFService {
 
                 // Delinquent Tax
                 contentStream.newLineAtOffset(84, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getDelinquentTax() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getDelinquentTax()));
+                }
 
                 // Condo or PUD
                 contentStream.newLineAtOffset(81, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCondoOrPUD() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCondoOrPUD());
+                }
 
                 // Fee HOA
                 contentStream.newLineAtOffset(36, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeeHOA() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getFeeHOA()));
+                }
 
                 contentStream.newLineAtOffset(45, 0);
                 if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getZoning() == null) {
@@ -356,7 +436,84 @@ public class FillBrokerPriceOpinionPDFService {
 
                 // Conforms to Neighbourhood
                 contentStream.newLineAtOffset(45, 0);
-                contentStream.showText("");
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsConformsToNeighborhood() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getIsConformsToNeighborhood());
+                }
+
+                contentStream.endText();
+
+                // Section. Condition Information
+
+                contentStream.setFont(PDType1Font.HELVETICA, 6);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(43, 570);
+                if (brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition());
+                }
+
+                contentStream.newLineAtOffset(57, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments());
+                }
+
+                contentStream.endText();
+
+                // Section. Neighborhood Information
+
+                contentStream.setFont(PDType1Font.HELVETICA, 6);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(43, 533);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMarketConditions() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMarketConditions());
+                }
+
+                contentStream.newLineAtOffset(89, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNumberOfCompetitiveListings() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNumberOfCompetitiveListings()));
+                }
+
+                contentStream.newLineAtOffset(112, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesFrom() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesFrom()));
+                }
+
+                contentStream.showText(" / ");
+
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesTo() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPriceRangeOfCurrentListingAndSalesTo()));
+                }
+
+                contentStream.newLineAtOffset(112, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getSupplyAndDemand() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getSupplyAndDemand());
+                }
+
+                contentStream.newLineAtOffset(81, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPositiveOrNegativeInfluences() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getPositiveOrNegativeInfluences());
+                }
 
                 contentStream.endText();
 
@@ -366,6 +523,34 @@ public class FillBrokerPriceOpinionPDFService {
 
                 contentStream.newLineAtOffset(43, 515);
                 contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getLocation());
+
+                contentStream.newLineAtOffset(89, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNeighborhoodTrend() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getNeighborhoodTrend());
+                }
+
+                contentStream.newLineAtOffset(112, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getHomesInNeighborhoodAre() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getHomesInNeighborhoodAre());
+                }
+
+                contentStream.newLineAtOffset(149, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getAverageMarketTime() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getAverageMarketTime());
+                }
+
+                contentStream.newLineAtOffset(76, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMostProbableBuyer() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getNeighborhoodInformation().getMostProbableBuyer());
+                }
 
                 contentStream.endText();
 
