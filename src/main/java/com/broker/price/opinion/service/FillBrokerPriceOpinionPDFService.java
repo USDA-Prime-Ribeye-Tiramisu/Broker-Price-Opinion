@@ -1744,6 +1744,84 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.endText();
                 }
 
+                contentStream.setFont(PDType1Font.HELVETICA, 5);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(92, 196);
+                if (brokerPriceOpinionPDFInfoDTO.getCommentsMade().getActiveCP1Comment() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getCommentsMade().getActiveCP1Comment());
+                }
+
+                contentStream.endText();
+
+                contentStream.setFont(PDType1Font.HELVETICA, 5);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(92, 187);
+                if (brokerPriceOpinionPDFInfoDTO.getCommentsMade().getActiveCP2Comment() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getCommentsMade().getActiveCP2Comment());
+                }
+
+                contentStream.endText();
+
+                contentStream.setFont(PDType1Font.HELVETICA, 5);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(92, 178);
+                if (brokerPriceOpinionPDFInfoDTO.getCommentsMade().getActiveCP3Comment() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getCommentsMade().getActiveCP3Comment());
+                }
+
+                contentStream.endText();
+
+                contentStream.setFont(PDType1Font.HELVETICA, 5);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(92, 169);
+                if (brokerPriceOpinionPDFInfoDTO.getCommentsMade().getClosedCP1Comment() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getCommentsMade().getClosedCP1Comment());
+                }
+
+                contentStream.endText();
+
+                contentStream.setFont(PDType1Font.HELVETICA, 5);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(92, 160);
+                if (brokerPriceOpinionPDFInfoDTO.getCommentsMade().getClosedCP2Comment() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getCommentsMade().getClosedCP2Comment());
+                }
+
+                contentStream.endText();
+
+                contentStream.setFont(PDType1Font.HELVETICA, 5);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(92, 151);
+                if (brokerPriceOpinionPDFInfoDTO.getCommentsMade().getClosedCP3Comment() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getCommentsMade().getClosedCP3Comment());
+                }
+
+                contentStream.endText();
+
                 float yTopImage = 425f;
                 float yBottomImage = yTopImage - 220f - 30f;
 
