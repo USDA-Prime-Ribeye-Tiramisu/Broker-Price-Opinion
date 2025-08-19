@@ -1744,6 +1744,8 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.endText();
                 }
 
+                // Section. Comments Made on Comparable Properties
+
                 contentStream.setFont(PDType1Font.HELVETICA, 5);
                 contentStream.setNonStrokingColor(Color.BLACK);
                 contentStream.beginText();
@@ -1818,6 +1820,104 @@ public class FillBrokerPriceOpinionPDFService {
                     contentStream.showText("");
                 } else {
                     contentStream.showText(brokerPriceOpinionPDFInfoDTO.getCommentsMade().getClosedCP3Comment());
+                }
+
+                contentStream.endText();
+
+                // Section. Property Value Estimate and Reconciliation
+
+                contentStream.setFont(PDType1Font.HELVETICA, 6);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(43, 110);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAverageMarketTime() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAverageMarketTime());
+                }
+
+                contentStream.newLineAtOffset(62, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIs() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIs()));
+                }
+
+                contentStream.newLineAtOffset(49, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIsListPrice() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIsListPrice()));
+                }
+
+                contentStream.newLineAtOffset(54, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepaired() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepaired()));
+                }
+
+                contentStream.newLineAtOffset(54, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepairedListPrice() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepairedListPrice()));
+                }
+
+                contentStream.newLineAtOffset(68, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIsQuickSale090Days() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIsQuickSale090Days()));
+                }
+
+                contentStream.newLineAtOffset(59, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIsList090Days() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsIsList090Days()));
+                }
+
+                contentStream.newLineAtOffset(62, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepaired090Days() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepaired090Days()));
+                }
+
+                contentStream.newLineAtOffset(59, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepairedList090Days() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getAsRepairedList090Days()));
+                }
+
+                contentStream.endText();
+
+                contentStream.setFont(PDType1Font.HELVETICA, 6);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(43, 93);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getBrokerORRealtorName() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getBrokerORRealtorName());
+                }
+
+                contentStream.newLineAtOffset(88, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getLicenseState() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getLicenseState());
+                }
+
+                contentStream.newLineAtOffset(45, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getLicenseNumber() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getPropertyValueEstimateAndReconciliation().getLicenseNumber());
                 }
 
                 contentStream.endText();
