@@ -32,11 +32,11 @@ public class PropertyInformation {
     private Integer currentRent;
     private Integer marketRent;
     private String isListed;
-    private Boolean isListedInPast12Months;
+    private String isListedInPast12Months;
     private Integer listPrice;
     private String nameOfListingCompany;
     private String listingAgentPhone;
-    private Boolean isTransferredInPast12Months;
+    private String isTransferredInPast12Months;
     private String priorSaleDate;
     private Double priorSalePrice;
     private Double currentTax;
@@ -46,7 +46,7 @@ public class PropertyInformation {
     private String zoning;
     private Double lotSize;
     private Double landValue;
-    private Boolean isConformsToNeighborhood;
+    private String isConformsToNeighborhood;
 
     private String construction;
     private String condition;

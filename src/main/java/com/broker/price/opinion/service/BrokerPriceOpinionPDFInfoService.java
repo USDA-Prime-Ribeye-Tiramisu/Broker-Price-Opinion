@@ -494,11 +494,11 @@ public class BrokerPriceOpinionPDFInfoService {
         info.setCurrentRent(rs.getObject("p_i_current_rent", Integer.class));
         info.setMarketRent(rs.getObject("p_i_market_rent", Integer.class));
         info.setIsListed(rs.getString("p_i_is_listed"));
-        info.setIsListedInPast12Months(rs.getObject("p_i_is_listed_in_past_12_months", Boolean.class));
+        info.setIsListedInPast12Months(rs.getString("p_i_is_listed_in_past_12_months"));
         info.setListPrice(rs.getObject("p_i_list_price", Integer.class));
         info.setNameOfListingCompany(rs.getString("p_i_name_of_listing_company"));
         info.setListingAgentPhone(rs.getString("p_i_listing_agent_phone"));
-        info.setIsTransferredInPast12Months(rs.getObject("p_i_is_transferred_in_past_12_months", Boolean.class));
+        info.setIsTransferredInPast12Months(rs.getString("p_i_is_transferred_in_past_12_months"));
         info.setPriorSaleDate(rs.getString("p_i_prior_sale_date"));
         info.setPriorSalePrice(rs.getObject("p_i_prior_sale_price", Double.class));
         info.setCurrentTax(rs.getObject("p_i_current_tax", Double.class));
@@ -508,7 +508,7 @@ public class BrokerPriceOpinionPDFInfoService {
         info.setZoning(rs.getString("p_i_zoning"));
         info.setLotSize(rs.getObject("p_i_lot_size", Double.class));
         info.setLandValue(rs.getObject("p_i_land_value", Double.class));
-        info.setIsConformsToNeighborhood(rs.getObject("p_i_is_conforms_to_neighborhood", Boolean.class));
+        info.setIsConformsToNeighborhood(rs.getString("p_i_is_conforms_to_neighborhood"));
         info.setConstruction(rs.getString("p_i_construction"));
         info.setCondition(rs.getString("p_i_condition"));
         info.setBasementAndFinish(rs.getString("p_i_basement_and_finish"));
