@@ -1922,6 +1922,26 @@ public class FillBrokerPriceOpinionPDFService {
 
                 contentStream.endText();
 
+                contentStream.setFont(PDType1Font.HELVETICA, 9);
+                contentStream.setNonStrokingColor(Color.BLACK);
+                contentStream.beginText();
+
+                contentStream.newLineAtOffset(358, 78);
+                if (brokerPriceOpinionPDFInfoDTO.getEstimatedValue() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(String.valueOf(brokerPriceOpinionPDFInfoDTO.getEstimatedValue()));
+                }
+
+                contentStream.newLineAtOffset(166, 0);
+                if (brokerPriceOpinionPDFInfoDTO.getInspectionDate() == null) {
+                    contentStream.showText("");
+                } else {
+                    contentStream.showText(brokerPriceOpinionPDFInfoDTO.getInspectionDate());
+                }
+
+                contentStream.endText();
+
                 float yTopImage = 425f;
                 float yBottomImage = yTopImage - 220f - 30f;
 
