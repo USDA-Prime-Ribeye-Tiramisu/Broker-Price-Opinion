@@ -161,6 +161,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 "p_i_cooling = ?, " +
                 "p_i_carport = ?, " +
                 "p_i_additional_amenities = ?, " +
+                "p_i_net_adjustments = ?, " +
 
                 "c_i_condition_overall = ?, " +
                 "c_i_condition_comments = ?, " +
@@ -283,6 +284,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCooling()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCarport()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getAdditionalAmenities()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNetAdjustments()).orElse(null),
 
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments()).orElse(null),
@@ -518,6 +520,7 @@ public class BrokerPriceOpinionPDFInfoService {
         info.setCooling(rs.getString("p_i_cooling"));
         info.setCarport(rs.getString("p_i_carport"));
         info.setAdditionalAmenities(rs.getString("p_i_additional_amenities"));
+        info.setNetAdjustments(rs.getInt("net_adjustments"));
 
         return info;
     }
@@ -721,6 +724,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 "p_i_cooling = ?, " +
                 "p_i_carport = ?, " +
                 "p_i_additional_amenities = ?, " +
+                "p_i_net_adjustments = ?, " +
 
                 "c_i_condition_overall = ?, " +
                 "c_i_condition_comments = ?, " +
@@ -843,6 +847,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCooling()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCarport()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getAdditionalAmenities()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNetAdjustments()).orElse(null),
 
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments()).orElse(null),
