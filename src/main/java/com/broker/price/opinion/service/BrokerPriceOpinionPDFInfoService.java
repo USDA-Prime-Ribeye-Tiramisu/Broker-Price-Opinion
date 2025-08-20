@@ -215,6 +215,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 "inspection_date = ?, " +
                 "additional_comments_addendum = ?, " +
 
+                "ivueit_vue_id = ?, " +
+
                 "bpo_info_generation_status = ? " +
                 "WHERE id = ?";
 
@@ -338,6 +340,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getInspectionDate()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getAdditionalCommentsAddendum()).orElse(null),
 
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getIvueitVueId()).orElse(null),
+
                 "Completed",
                 id
         );
@@ -429,6 +433,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     bpo.setEstimatedValue(rs.getInt("estimated_value"));
                     bpo.setInspectionDate(rs.getString("inspection_date"));
                     bpo.setAdditionalCommentsAddendum(rs.getString("additional_comments_addendum"));
+
+                    bpo.setIvueitVueId(rs.getString("ivueit_vue_id"));
 
                     return bpo;
                 }
@@ -778,6 +784,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 "inspection_date = ?, " +
                 "additional_comments_addendum = ?, " +
 
+                "ivueit_vue_id = ?, " +
+
                 "bpo_info_generation_status = ? " +
                 "WHERE id = ?";
 
@@ -900,6 +908,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getEstimatedValue()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getInspectionDate()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getAdditionalCommentsAddendum()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getIvueitVueId()).orElse(null),
 
                 "Completed",
                 id
@@ -2375,14 +2385,16 @@ public class BrokerPriceOpinionPDFInfoService {
 
         brokerPriceOpinionPDFInfoDTO.setImagesLinks(imagesLinks);
 
-        String ivueitRequestId = iVueitService.createIVueitImagesRequest(propertyID,
-                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress(),
-                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity(),
-                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState(),
-                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode()
-        );
+//        String ivueitRequestId = iVueitService.createIVueitImagesRequest(propertyID,
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress(),
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity(),
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState(),
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode()
+//        );
+//
+//        brokerPriceOpinionPDFInfoDTO.setIvueitVueId(ivueitRequestId);
 
-        brokerPriceOpinionPDFInfoDTO.setIvueitVueId(ivueitRequestId);
+        brokerPriceOpinionPDFInfoDTO.setIvueitVueId(null);
 
         return brokerPriceOpinionPDFInfoDTO;
     }
