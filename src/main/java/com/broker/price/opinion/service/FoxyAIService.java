@@ -40,9 +40,9 @@ public class FoxyAIService {
         this.prodBackupJdbcTemplate = prodBackupJdbcTemplate;
     }
 
-    public void createImageGroup(int bpoId, String address) {
+    public Integer createImageGroup(String ivueitVueId, String address) {
 
-        int recordId = createBPOFoxyAIServiceUsageRow(bpoId, address);
+        int recordId = createBPOFoxyAIServiceUsageRow(ivueitVueId, address);
 
         try {
 
@@ -71,13 +71,17 @@ public class FoxyAIService {
 
             if ("completed".equals(json.optString("status")) && json.optString("_id") != null) {
                 updateImagesGroupCreationStatusById(recordId, "Done", json.optString("_id"));
+                return recordId;
             } else {
                 updateImagesGroupCreationStatusById(recordId, "Failed", null);
+                return recordId;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 
     public void uploadImagesBatchUserGroup(int recordId, String groupId, List<String> imageURLs) {
@@ -141,7 +145,7 @@ public class FoxyAIService {
         }
     }
 
-    public void getConditionScores(int recordId, String groupId) {
+    public Double getConditionScores(String ivueitVueId, String groupId) {
 
         List<Double> conditionScores = new ArrayList<>();
 
@@ -185,26 +189,30 @@ public class FoxyAIService {
                 double sum = 0;
                 for (double score : conditionScores) {sum += score;}
                 double conditionScore = sum / conditionScores.size();
-                updateConditionScoreStatusById(recordId, "Done", conditionScore);
+                updateConditionScoreStatusById(ivueitVueId, "Done", conditionScore);
+                return conditionScore;
             } else {
-                updateConditionScoreStatusById(recordId, "Failed", null);
+                updateConditionScoreStatusById(ivueitVueId, "Failed", null);
+                return null;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 
-    public Integer createBPOFoxyAIServiceUsageRow(int bpoId, String address) {
+    public Integer createBPOFoxyAIServiceUsageRow(String ivueitVueId, String address) {
 
-        String sql = "INSERT INTO firstamerican.bpo_foxyai_service_usage (bpo_id, address, group_name) " +
+        String sql = "INSERT INTO firstamerican.bpo_foxyai_service_usage (ivueit_vue_id, address, group_name) " +
                 "VALUES (?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         prodJdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setInt(1, bpoId);
+            ps.setString(1, ivueitVueId);
             ps.setString(2, address);
             ps.setString(3, address);
             return ps;
@@ -236,12 +244,12 @@ public class FoxyAIService {
         prodJdbcTemplate.update(sql, batchUploadStatus, imageURLs, id);
     }
 
-    public void updateConditionScoreStatusById(int id, String conditionReportStatus, Double conditionScore) {
+    public void updateConditionScoreStatusById(String ivueitVueId, String conditionReportStatus, Double conditionScore) {
 
         String sql = "UPDATE firstamerican.bpo_foxyai_service_usage " +
                 "SET condition_report_status = ?, condition_score = ? " +
-                "WHERE id = ?";
+                "WHERE ivueit_vue_id = ?";
 
-        prodJdbcTemplate.update(sql, conditionReportStatus, conditionScore, id);
+        prodJdbcTemplate.update(sql, conditionReportStatus, conditionScore, ivueitVueId);
     }
 }

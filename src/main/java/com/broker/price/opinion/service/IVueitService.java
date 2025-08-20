@@ -187,7 +187,7 @@ public class IVueitService {
         return Arrays.asList(images.split("\\s*,\\s*"));
     }
 
-    public void getSubmissionIdFromIVueitByVueId(String vueId) {
+    public String getSubmissionIdIfExistsByVueId(String vueId) {
 
         String url = "https://prod.data.ivueit.network/api/v1/vue/" + vueId;
 
@@ -206,6 +206,7 @@ public class IVueitService {
                 JsonNode submissionIdNode = mapper.readTree(response.getBody()).get("submissionId");
                 if (submissionIdNode != null && !submissionIdNode.isNull()) {
                     updateBPOiVueitRequestRowSubmissionId(submissionIdNode.asText(), vueId);
+                    return submissionIdNode.asText();
                 } else {
                     throw new RuntimeException("submissionId not found in response");
                 }
@@ -257,7 +258,7 @@ public class IVueitService {
                         }
                     }
                 }
-                updateImagesForSubmissionId(submissionId, urls);
+                updateImagesAllForSubmissionId(submissionId, urls);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to parse JSON response: " + e.getMessage(), e);
             }
@@ -266,9 +267,116 @@ public class IVueitService {
         }
     }
 
-    public void updateImagesForSubmissionId(String submissionId, List<String> imageUrls) {
+    public void fetchImagesFromIVueitBySubmissionIdGrouped(String submissionId) {
+
+        String url = "https://prod.data.ivueit.network/api/v1/surveysubmission/" + submissionId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x_ivueit_auth_token", getAccessTokenIVueitAPI());
+
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(response.getBody());
+
+                List<String> rightSideHouseImages = new ArrayList<>();
+                List<String> leftSideHouseImages = new ArrayList<>();
+                List<String> streetImages = new ArrayList<>();
+                List<String> addressVerificationImages = new ArrayList<>();
+                List<String> frontHouseImages = new ArrayList<>();
+
+                JsonNode steps = root.get("steps");
+                if (steps != null && steps.isArray()) {
+                    for (JsonNode step : steps) {
+                        String stepType = step.path("stepType").asText();
+                        String description = step.path("description").asText();
+
+                        if ("PHOTO".equalsIgnoreCase(stepType)) {
+                            JsonNode photos = step.get("photos");
+                            if (photos != null && photos.isArray()) {
+                                for (JsonNode photo : photos) {
+                                    String urlVal = photo.path("url").asText(null);
+                                    if (urlVal != null) {
+                                        // Grouping logic
+                                        if (description.contains("front right side")) {
+                                            rightSideHouseImages.add(urlVal);
+                                        } else if (description.contains("front left side")) {
+                                            leftSideHouseImages.add(urlVal);
+                                        } else if (description.contains("street scene")) {
+                                            streetImages.add(urlVal);
+                                        } else if (description.contains("house number")) {
+                                            addressVerificationImages.add(urlVal);
+                                        } else if (description.contains("front of the building straight on")) {
+                                            frontHouseImages.add(urlVal);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                System.out.println("Right Side House Images: " + rightSideHouseImages);
+                System.out.println("Left Side House Images: " + leftSideHouseImages);
+                System.out.println("Street Images: " + streetImages);
+                System.out.println("Address Verification Images: " + addressVerificationImages);
+                System.out.println("Front House Images: " + frontHouseImages);
+
+                updateImagesGroupsForSubmissionId(submissionId, rightSideHouseImages, leftSideHouseImages, streetImages, addressVerificationImages, frontHouseImages);
+
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse JSON response: " + e.getMessage(), e);
+            }
+        } else {
+            throw new RuntimeException("Failed to fetch submission: " + response.getStatusCode());
+        }
+    }
+
+    public void updateImagesAllForSubmissionId(String submissionId, List<String> imageUrls) {
         String joinedURLs = String.join(",", imageUrls);
-        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET images = ? WHERE submission_id = ?";
+        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET images_all = ? WHERE submission_id = ?";
         prodJdbcTemplate.update(sql, joinedURLs, submissionId);
+    }
+
+    public void updateImagesGroupsForSubmissionId(String submissionId, List<String> rightSideHouseImages, List<String> leftSideHouseImages, List<String> streetImages, List<String> addressVerificationImages, List<String> frontHouseImages) {
+
+        String joinedRightSideHouseImagesURLs = String.join(",", rightSideHouseImages);
+        String joinedLeftSideHouseImagesURLs = String.join(",", leftSideHouseImages);
+        String joinedStreetImagesURLs = String.join(",", streetImages);
+        String joinedAddressVerificationImagesURLs = String.join(",", addressVerificationImages);
+        String joinedFrontHouseImagesURLs = String.join(",", frontHouseImages);
+
+        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage " +
+                "SET " +
+                "images_front_right = ?" + ", " +
+                "images_front_left = ?" + ", " +
+                "images_front = ?" + ", " +
+                "images_address_verification = ?" + ", " +
+                "images_street = ?" + " "  +
+                "WHERE submission_id = ?";
+
+        prodJdbcTemplate.update(sql,
+                joinedRightSideHouseImagesURLs,
+                joinedLeftSideHouseImagesURLs,
+                joinedStreetImagesURLs,
+                joinedAddressVerificationImagesURLs,
+                joinedFrontHouseImagesURLs,
+                submissionId
+        );
+    }
+
+    public void checkAndProcessIVueitRequests() {
+        String query = "SELECT vue_id FROM firstamerican.bpo_ivueit_service_usage WHERE submission_id IS NULL";
+        List<String> resultList = prodBackupJdbcTemplate.queryForList(query, String.class);
+        for (String vueId : resultList) {
+            String submissionId = getSubmissionIdIfExistsByVueId(vueId);
+            if (submissionId != null) {fetchImagesFromIVueitBySubmissionIdGrouped(submissionId);}
+        }
     }
 }

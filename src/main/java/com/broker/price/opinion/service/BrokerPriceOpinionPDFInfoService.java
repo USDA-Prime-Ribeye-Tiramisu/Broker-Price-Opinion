@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
@@ -57,6 +56,12 @@ public class BrokerPriceOpinionPDFInfoService {
 
     @Autowired
     private ImagesService imagesService;
+
+    @Autowired
+    private IVueitService iVueitService;
+
+    @Autowired
+    private FoxyAIService foxyAIService;
 
     public Integer generateBPOInformationRequest(String propertyID) {
 
@@ -159,6 +164,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 "p_i_cooling = ?, " +
                 "p_i_carport = ?, " +
                 "p_i_additional_amenities = ?, " +
+                "p_i_net_adjustments = ?, " +
 
                 "c_i_condition_overall = ?, " +
                 "c_i_condition_comments = ?, " +
@@ -211,6 +217,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 "estimated_value = ?, " +
                 "inspection_date = ?, " +
                 "additional_comments_addendum = ?, " +
+
+                "ivueit_vue_id = ?, " +
 
                 "bpo_info_generation_status = ? " +
                 "WHERE id = ?";
@@ -281,6 +289,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCooling()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCarport()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getAdditionalAmenities()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNetAdjustments()).orElse(null),
 
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments()).orElse(null),
@@ -333,6 +342,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getEstimatedValue()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getInspectionDate()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getAdditionalCommentsAddendum()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getIvueitVueId()).orElse(null),
 
                 "Completed",
                 id
@@ -426,6 +437,8 @@ public class BrokerPriceOpinionPDFInfoService {
                     bpo.setInspectionDate(rs.getString("inspection_date"));
                     bpo.setAdditionalCommentsAddendum(rs.getString("additional_comments_addendum"));
 
+                    bpo.setIvueitVueId(rs.getString("ivueit_vue_id"));
+
                     return bpo;
                 }
         );
@@ -516,6 +529,7 @@ public class BrokerPriceOpinionPDFInfoService {
         info.setCooling(rs.getString("p_i_cooling"));
         info.setCarport(rs.getString("p_i_carport"));
         info.setAdditionalAmenities(rs.getString("p_i_additional_amenities"));
+        info.setNetAdjustments(rs.getInt("p_i_net_adjustments"));
 
         return info;
     }
@@ -719,6 +733,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 "p_i_cooling = ?, " +
                 "p_i_carport = ?, " +
                 "p_i_additional_amenities = ?, " +
+                "p_i_net_adjustments = ?, " +
 
                 "c_i_condition_overall = ?, " +
                 "c_i_condition_comments = ?, " +
@@ -771,6 +786,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 "estimated_value = ?, " +
                 "inspection_date = ?, " +
                 "additional_comments_addendum = ?, " +
+
+                "ivueit_vue_id = ?, " +
 
                 "bpo_info_generation_status = ? " +
                 "WHERE id = ?";
@@ -841,6 +858,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCooling()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getCarport()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getAdditionalAmenities()).orElse(null),
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getPropertyInformation().getNetAdjustments()).orElse(null),
 
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getOverallCondition()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getConditionInformation().getComments()).orElse(null),
@@ -893,6 +911,8 @@ public class BrokerPriceOpinionPDFInfoService {
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getEstimatedValue()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getInspectionDate()).orElse(null),
                 Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getAdditionalCommentsAddendum()).orElse(null),
+
+                Optional.ofNullable(brokerPriceOpinionPDFInfoDTO.getIvueitVueId()).orElse(null),
 
                 "Completed",
                 id
@@ -2368,6 +2388,17 @@ public class BrokerPriceOpinionPDFInfoService {
 
         brokerPriceOpinionPDFInfoDTO.setImagesLinks(imagesLinks);
 
+//        String ivueitRequestId = iVueitService.createIVueitImagesRequest(propertyID,
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress(),
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity(),
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState(),
+//                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode()
+//        );
+//
+//        brokerPriceOpinionPDFInfoDTO.setIvueitVueId(ivueitRequestId);
+
+        brokerPriceOpinionPDFInfoDTO.setIvueitVueId(null);
+
         return brokerPriceOpinionPDFInfoDTO;
     }
 
@@ -3043,5 +3074,89 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         return query.toString();
+    }
+
+    public void checkAndProcessFoxyAIRequests() throws InterruptedException {
+
+        String query = "select * from firstamerican.broker_price_opinion_pdf_info bpopi " +
+                "inner join firstamerican.bpo_ivueit_service_usage bisu on bpopi.ivueit_vue_id = bisu.vue_id " +
+                "where bpopi.p_i_condition is null " +
+                "and bpopi.ivueit_vue_id is not null " +
+                "and bisu.submission_id is not null " +
+                "and images_front_right is not null " +
+                "and images_front_left is not null " +
+                "and images_front is not null";
+
+        List<BrokerPriceOpinionPDFInfoDTO> listBrokerPriceOpinionPDFInfoDTO = prodBackupJdbcTemplate.query(query, (rs, rowNum) -> {
+            BrokerPriceOpinionPDFInfoDTO bpo = new BrokerPriceOpinionPDFInfoDTO();
+            bpo.setFullAddress(rs.getString("full_address"));
+            bpo.setPropertyID(rs.getString("property_id"));
+            bpo.setStatus(rs.getString("status"));
+            bpo.setLongitude(rs.getString("longitude"));
+            bpo.setLatitude(rs.getString("latitude"));
+            bpo.setPlacekey(rs.getString("placekey"));
+
+            bpo.setOrderInformation(mapOrderInformation(rs));
+            bpo.setPropertyInformation(mapPropertyInformation(rs));
+            bpo.setConditionInformation(mapConditionInformation(rs));
+            bpo.setNeighborhoodInformation(mapNeighborhoodInformation(rs));
+            bpo.setCommentsMade(mapCommentsMade(rs));
+            bpo.setPropertyValueEstimateAndReconciliation(mapPropertyValueEstimateAndReconciliation(rs));
+            bpo.setImagesLinks(mapImagesLinks(rs));
+
+            bpo.setEstimatedValue(rs.getInt("estimated_value"));
+            bpo.setInspectionDate(rs.getString("inspection_date"));
+            bpo.setAdditionalCommentsAddendum(rs.getString("additional_comments_addendum"));
+            bpo.setIvueitVueId(rs.getString("ivueit_vue_id"));
+
+            return bpo;
+        });
+
+        for (BrokerPriceOpinionPDFInfoDTO bpo : listBrokerPriceOpinionPDFInfoDTO) {
+
+            Integer foxyAIId = foxyAIService.createImageGroup(bpo.getIvueitVueId(), bpo.getFullAddress());
+
+            if (foxyAIId != null) {
+
+                String groupIdQuery = "select group_id from firstamerican.bpo_foxyai_service_usage where id = " + foxyAIId;
+                String groupId = prodBackupJdbcTemplate.queryForObject(groupIdQuery, String.class);
+
+                List<String> images = getImagesByVueId(bpo.getIvueitVueId());
+
+                foxyAIService.uploadImagesBatchUserGroup(foxyAIId, groupId, images);
+
+                Thread.sleep(10000);
+
+                Double conditionScore = foxyAIService.getConditionScores(bpo.getIvueitVueId(), groupId);
+
+                String sql = "UPDATE firstamerican.broker_price_opinion_pdf_info " +
+                        "SET p_i_condition = ?, ivueit_foxyai_status = ? WHERE ivueit_vue_id = ?";
+
+                prodJdbcTemplate.update(sql, conditionScore, "Completed", bpo.getIvueitVueId());
+            }
+        }
+    }
+
+    public List<String> getImagesByVueId(String vueId) {
+
+        String sql = "select images_front_right, images_front_left, images_front " +
+                "from firstamerican.bpo_ivueit_service_usage " +
+                "where vue_id = ?";
+
+        return prodBackupJdbcTemplate.query(sql, new Object[]{vueId}, rs -> {
+            List<String> images = new ArrayList<>();
+            while (rs.next()) {
+                listAddImages(images, rs.getString("images_front_right"));
+                listAddImages(images, rs.getString("images_front_left"));
+                listAddImages(images, rs.getString("images_front"));
+            }
+            return images;
+        });
+    }
+
+    private void listAddImages(List<String> list, String value) {
+        if (value != null && !value.isEmpty()) {
+            Arrays.stream(value.split(",")).map(String::trim).filter(s -> !s.isEmpty()).forEach(list::add);
+        }
     }
 }

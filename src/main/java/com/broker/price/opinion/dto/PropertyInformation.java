@@ -55,4 +55,5 @@ public class PropertyInformation {
     private String cooling;
     private String carport;
     private String additionalAmenities;
+    private Integer netAdjustments;
 }
