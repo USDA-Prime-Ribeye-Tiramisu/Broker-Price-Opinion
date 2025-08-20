@@ -58,7 +58,7 @@ public class IVueitService {
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(
-                    "https://api.staging.ivueit.services/login/v1/service",
+                    "https://prod.data.ivueit.network/login/v1/service",
                     HttpMethod.POST, requestEntity, String.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
@@ -81,7 +81,7 @@ public class IVueitService {
 
         int iVueitRequestId = createBPOiVueitServiceUsageRow(propertyId, address, city, state, zipcode);
 
-        String url = "https://api.staging.ivueit.services/api/v1/batch/import";
+        String url = "https://prod.data.ivueit.network/api/v1/batch/import";
 
         long publishAt = getPublishAtNanos();
         long expiresAt = publishAt + Duration.ofDays(7).toMillis() * 1_000_000;
@@ -189,7 +189,7 @@ public class IVueitService {
 
     public void getSubmissionIdFromIVueitByVueId(String vueId) {
 
-        String url = "https://api.staging.ivueit.services/api/v1/vue/" + vueId;
+        String url = "https://prod.data.ivueit.network/api/v1/vue/" + vueId;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("x_ivueit_auth_token", getAccessTokenIVueitAPI());
@@ -224,7 +224,7 @@ public class IVueitService {
 
     public void fetchImagesFromIVueitBySubmissionId(String submissionId) {
 
-        String url = "https://api.staging.ivueit.services/api/v1/surveysubmission/" + submissionId;
+        String url = "https://prod.data.ivueit.network/api/v1/surveysubmission/" + submissionId;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("x_ivueit_auth_token", getAccessTokenIVueitAPI());
