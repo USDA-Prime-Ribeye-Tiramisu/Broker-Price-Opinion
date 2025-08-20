@@ -258,7 +258,7 @@ public class IVueitService {
                         }
                     }
                 }
-                updateImagesForSubmissionId(submissionId, urls);
+                updateImagesAllForSubmissionId(submissionId, urls);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to parse JSON response: " + e.getMessage(), e);
             }
@@ -328,6 +328,8 @@ public class IVueitService {
                 System.out.println("Address Verification Images: " + addressVerificationImages);
                 System.out.println("Front House Images: " + frontHouseImages);
 
+                updateImagesGroupsForSubmissionId(submissionId, rightSideHouseImages, leftSideHouseImages, streetImages, addressVerificationImages, frontHouseImages);
+
             } catch (Exception e) {
                 throw new RuntimeException("Failed to parse JSON response: " + e.getMessage(), e);
             }
@@ -336,10 +338,37 @@ public class IVueitService {
         }
     }
 
-    public void updateImagesForSubmissionId(String submissionId, List<String> imageUrls) {
+    public void updateImagesAllForSubmissionId(String submissionId, List<String> imageUrls) {
         String joinedURLs = String.join(",", imageUrls);
-        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET images = ? WHERE submission_id = ?";
+        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET images_all = ? WHERE submission_id = ?";
         prodJdbcTemplate.update(sql, joinedURLs, submissionId);
+    }
+
+    public void updateImagesGroupsForSubmissionId(String submissionId, List<String> rightSideHouseImages, List<String> leftSideHouseImages, List<String> streetImages, List<String> addressVerificationImages, List<String> frontHouseImages) {
+
+        String joinedRightSideHouseImagesURLs = String.join(",", rightSideHouseImages);
+        String joinedLeftSideHouseImagesURLs = String.join(",", leftSideHouseImages);
+        String joinedStreetImagesURLs = String.join(",", streetImages);
+        String joinedAddressVerificationImagesURLs = String.join(",", addressVerificationImages);
+        String joinedFrontHouseImagesURLs = String.join(",", frontHouseImages);
+
+        String sql = "UPDATE firstamerican.bpo_ivueit_service_usage " +
+                "SET " +
+                "images_front_right = ?" + ", " +
+                "images_fromt_left = ?" + ", " +
+                "images_front = ?" + ", " +
+                "images_address_verification = ?" + ", " +
+                "images_street = ?" + " "  +
+                "WHERE submission_id = ?";
+
+        prodJdbcTemplate.update(sql,
+                joinedRightSideHouseImagesURLs,
+                joinedLeftSideHouseImagesURLs,
+                joinedStreetImagesURLs,
+                joinedAddressVerificationImagesURLs,
+                joinedFrontHouseImagesURLs,
+                submissionId
+        );
     }
 
     public void checkAndProcessIVueitRequests() {
@@ -347,7 +376,7 @@ public class IVueitService {
         List<String> resultList = prodBackupJdbcTemplate.queryForList(query, String.class);
         for (String vueId : resultList) {
             String submissionId = getSubmissionIdIfExistsByVueId(vueId);
-            if (submissionId != null) {fetchImagesFromIVueitBySubmissionId(submissionId);}
+            if (submissionId != null) {fetchImagesFromIVueitBySubmissionIdGrouped(submissionId);}
         }
     }
 }
