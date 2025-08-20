@@ -355,7 +355,7 @@ public class IVueitService {
         String sql = "UPDATE firstamerican.bpo_ivueit_service_usage " +
                 "SET " +
                 "images_front_right = ?" + ", " +
-                "images_fromt_left = ?" + ", " +
+                "images_front_left = ?" + ", " +
                 "images_front = ?" + ", " +
                 "images_address_verification = ?" + ", " +
                 "images_street = ?" + " "  +

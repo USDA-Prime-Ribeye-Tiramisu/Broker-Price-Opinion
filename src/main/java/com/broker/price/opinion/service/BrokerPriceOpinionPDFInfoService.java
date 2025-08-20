@@ -60,6 +60,9 @@ public class BrokerPriceOpinionPDFInfoService {
     @Autowired
     private IVueitService iVueitService;
 
+    @Autowired
+    private FoxyAIService foxyAIService;
+
     public Integer generateBPOInformationRequest(String propertyID) {
 
         String sql = "INSERT INTO firstamerican.broker_price_opinion_pdf_info " +
@@ -526,7 +529,7 @@ public class BrokerPriceOpinionPDFInfoService {
         info.setCooling(rs.getString("p_i_cooling"));
         info.setCarport(rs.getString("p_i_carport"));
         info.setAdditionalAmenities(rs.getString("p_i_additional_amenities"));
-        info.setNetAdjustments(rs.getInt("net_adjustments"));
+        info.setNetAdjustments(rs.getInt("p_i_net_adjustments"));
 
         return info;
     }
@@ -3071,5 +3074,89 @@ public class BrokerPriceOpinionPDFInfoService {
         }
 
         return query.toString();
+    }
+
+    public void checkAndProcessFoxyAIRequests() throws InterruptedException {
+
+        String query = "select * from firstamerican.broker_price_opinion_pdf_info bpopi " +
+                "inner join firstamerican.bpo_ivueit_service_usage bisu on bpopi.ivueit_vue_id = bisu.vue_id " +
+                "where bpopi.p_i_condition is null " +
+                "and bpopi.ivueit_vue_id is not null " +
+                "and bisu.submission_id is not null " +
+                "and images_front_right is not null " +
+                "and images_front_left is not null " +
+                "and images_front is not null";
+
+        List<BrokerPriceOpinionPDFInfoDTO> listBrokerPriceOpinionPDFInfoDTO = prodBackupJdbcTemplate.query(query, (rs, rowNum) -> {
+            BrokerPriceOpinionPDFInfoDTO bpo = new BrokerPriceOpinionPDFInfoDTO();
+            bpo.setFullAddress(rs.getString("full_address"));
+            bpo.setPropertyID(rs.getString("property_id"));
+            bpo.setStatus(rs.getString("status"));
+            bpo.setLongitude(rs.getString("longitude"));
+            bpo.setLatitude(rs.getString("latitude"));
+            bpo.setPlacekey(rs.getString("placekey"));
+
+            bpo.setOrderInformation(mapOrderInformation(rs));
+            bpo.setPropertyInformation(mapPropertyInformation(rs));
+            bpo.setConditionInformation(mapConditionInformation(rs));
+            bpo.setNeighborhoodInformation(mapNeighborhoodInformation(rs));
+            bpo.setCommentsMade(mapCommentsMade(rs));
+            bpo.setPropertyValueEstimateAndReconciliation(mapPropertyValueEstimateAndReconciliation(rs));
+            bpo.setImagesLinks(mapImagesLinks(rs));
+
+            bpo.setEstimatedValue(rs.getInt("estimated_value"));
+            bpo.setInspectionDate(rs.getString("inspection_date"));
+            bpo.setAdditionalCommentsAddendum(rs.getString("additional_comments_addendum"));
+            bpo.setIvueitVueId(rs.getString("ivueit_vue_id"));
+
+            return bpo;
+        });
+
+        for (BrokerPriceOpinionPDFInfoDTO bpo : listBrokerPriceOpinionPDFInfoDTO) {
+
+            Integer foxyAIId = foxyAIService.createImageGroup(bpo.getIvueitVueId(), bpo.getFullAddress());
+
+            if (foxyAIId != null) {
+
+                String groupIdQuery = "select group_id from firstamerican.bpo_foxyai_service_usage where id = " + foxyAIId;
+                String groupId = prodBackupJdbcTemplate.queryForObject(groupIdQuery, String.class);
+
+                List<String> images = getImagesByVueId(bpo.getIvueitVueId());
+
+                foxyAIService.uploadImagesBatchUserGroup(foxyAIId, groupId, images);
+
+                Thread.sleep(10000);
+
+                Double conditionScore = foxyAIService.getConditionScores(bpo.getIvueitVueId(), groupId);
+
+                String sql = "UPDATE firstamerican.broker_price_opinion_pdf_info " +
+                        "SET p_i_condition = ?, ivueit_foxyai_status = ? WHERE ivueit_vue_id = ?";
+
+                prodJdbcTemplate.update(sql, conditionScore, "Completed", bpo.getIvueitVueId());
+            }
+        }
+    }
+
+    public List<String> getImagesByVueId(String vueId) {
+
+        String sql = "select images_front_right, images_front_left, images_front " +
+                "from firstamerican.bpo_ivueit_service_usage " +
+                "where vue_id = ?";
+
+        return prodBackupJdbcTemplate.query(sql, new Object[]{vueId}, rs -> {
+            List<String> images = new ArrayList<>();
+            while (rs.next()) {
+                listAddImages(images, rs.getString("images_front_right"));
+                listAddImages(images, rs.getString("images_front_left"));
+                listAddImages(images, rs.getString("images_front"));
+            }
+            return images;
+        });
+    }
+
+    private void listAddImages(List<String> list, String value) {
+        if (value != null && !value.isEmpty()) {
+            Arrays.stream(value.split(",")).map(String::trim).filter(s -> !s.isEmpty()).forEach(list::add);
+        }
     }
 }
