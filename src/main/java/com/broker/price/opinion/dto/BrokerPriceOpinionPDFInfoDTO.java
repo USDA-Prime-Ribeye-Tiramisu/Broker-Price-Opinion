@@ -40,7 +40,5 @@ public class BrokerPriceOpinionPDFInfoDTO {
 
     private ImagesLinks imagesLinks;
 
-    private String ivueit_vue_id;
-
-    private String foxy_ai_condition_score;
+    private String ivueitVueId;
 }

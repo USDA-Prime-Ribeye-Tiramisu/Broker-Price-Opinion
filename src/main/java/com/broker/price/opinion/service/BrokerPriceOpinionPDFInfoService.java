@@ -2382,7 +2382,7 @@ public class BrokerPriceOpinionPDFInfoService {
                 brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode()
         );
 
-        brokerPriceOpinionPDFInfoDTO.setIvueit_vue_id(ivueitRequestId);
+        brokerPriceOpinionPDFInfoDTO.setIvueitVueId(ivueitRequestId);
 
         return brokerPriceOpinionPDFInfoDTO;
     }
