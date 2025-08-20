@@ -187,7 +187,7 @@ public class IVueitService {
         return Arrays.asList(images.split("\\s*,\\s*"));
     }
 
-    public void getSubmissionIdFromIVueitByVueId(String vueId) {
+    public String getSubmissionIdIfExistsByVueId(String vueId) {
 
         String url = "https://prod.data.ivueit.network/api/v1/vue/" + vueId;
 
@@ -206,6 +206,7 @@ public class IVueitService {
                 JsonNode submissionIdNode = mapper.readTree(response.getBody()).get("submissionId");
                 if (submissionIdNode != null && !submissionIdNode.isNull()) {
                     updateBPOiVueitRequestRowSubmissionId(submissionIdNode.asText(), vueId);
+                    return submissionIdNode.asText();
                 } else {
                     throw new RuntimeException("submissionId not found in response");
                 }
@@ -270,5 +271,14 @@ public class IVueitService {
         String joinedURLs = String.join(",", imageUrls);
         String sql = "UPDATE firstamerican.bpo_ivueit_service_usage SET images = ? WHERE submission_id = ?";
         prodJdbcTemplate.update(sql, joinedURLs, submissionId);
+    }
+
+    public void checkAndProcessIVueitRequests() {
+        String query = "SELECT vue_id FROM firstamerican.bpo_ivueit_service_usage WHERE submission_id IS NULL";
+        List<String> resultList = prodBackupJdbcTemplate.queryForList(query, String.class);
+        for (String vueId : resultList) {
+            String submissionId = getSubmissionIdIfExistsByVueId(vueId);
+            if (submissionId != null) {fetchImagesFromIVueitBySubmissionId(submissionId);}
+        }
     }
 }

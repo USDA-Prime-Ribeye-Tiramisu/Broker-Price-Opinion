@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
@@ -57,6 +56,9 @@ public class BrokerPriceOpinionPDFInfoService {
 
     @Autowired
     private ImagesService imagesService;
+
+    @Autowired
+    private IVueitService iVueitService;
 
     public Integer generateBPOInformationRequest(String propertyID) {
 
@@ -2367,6 +2369,15 @@ public class BrokerPriceOpinionPDFInfoService {
         imagesLinks.setActiveListing3(imagesService.getFirstImagePlatlabTrinoServerANDPlatlabAWSS3(closedComparablePropertyInformationList.get(2).getCompMLSId(), activeComparablePropertyInformationList.get(2).getCompDisplayMLSNumber()));
 
         brokerPriceOpinionPDFInfoDTO.setImagesLinks(imagesLinks);
+
+        String ivueitRequestId = iVueitService.createIVueitImagesRequest(propertyID,
+                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress(),
+                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity(),
+                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getState(),
+                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getZipcode()
+        );
+
+        brokerPriceOpinionPDFInfoDTO.setIvueit_vue_id(ivueitRequestId);
 
         return brokerPriceOpinionPDFInfoDTO;
     }
