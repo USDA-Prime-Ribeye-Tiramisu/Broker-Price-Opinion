@@ -39,4 +39,6 @@ public class BrokerPriceOpinionPDFInfoDTO {
     private String additionalCommentsAddendum;
 
     private ImagesLinks imagesLinks;
+
+    private String ivueitVueId;
 }
