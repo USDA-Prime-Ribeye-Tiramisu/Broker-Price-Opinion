@@ -2388,6 +2388,8 @@ public class BrokerPriceOpinionPDFInfoService {
 
         brokerPriceOpinionPDFInfoDTO.setImagesLinks(imagesLinks);
 
+        // TODO: Uncomment after testing
+
 //        String ivueitRequestId = iVueitService.createIVueitImagesRequest(propertyID,
 //                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getAddress(),
 //                brokerPriceOpinionPDFInfoDTO.getOrderInformation().getCity(),
